@@ -80,5 +80,5 @@ if(BUILD_STATIC)
     set_target_properties(ParTI_s PROPERTIES CXX_STANDARD 11)
 endif()
 
-add_subdirectory("examples")
-add_subdirectory("tests")
+#add_subdirectory("examples")
+#add_subdirectory("tests")
