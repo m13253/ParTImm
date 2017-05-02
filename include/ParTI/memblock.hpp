@@ -20,6 +20,8 @@
 #define PTI_MEMBLOCK_INCLUDED
 
 #include <cstddef>
+#include <ParTI/memnode.hpp>
+#include <ParTI/session.hpp>
 
 namespace pti {
 
@@ -28,33 +30,159 @@ struct MemBlock {
 
 private:
 
-    int num_nodes;
-
     int last_node;
 
     T** pointers;
 
 public:
 
-    explicit MemBlock(int num_nodes) {
-        this->num_nodes = num_nodes;
-        this->last_node = -1;
-        pointers = new T* [num_nodes];
+    explicit MemBlock() {
+        int num_nodes = session.mem_nodes.size();
+        pointers = new T* [num_nodes]();
+        last_node = -1;
     }
 
     ~MemBlock() {
+        int num_nodes = session.mem_nodes.size();
+        for(int i = 0; i < num_nodes; ++i) {
+            if(pointers[i]) {
+                session.mem_nodes[i]->free(pointers[i]);
+            }
+        }
         delete[] pointers;
+    }
+
+    void allocate(int node) {
+        // If you need to call the constructor, allocate it on CPU, then
+        //     new (get(CPU_node)) T();
+        // to invoke the constructor properly.
+        if(!pointers[node]) {
+            pointers[node] = session.mem_nodes[node]->malloc(sizeof (T));
+        }
+        if(last_node == -1) {
+            last_node = node;
+        }
+    }
+
+    void free(int node) {
+        if(node != last_node) {
+            session.mem_nodes[node]->free(pointers[node]);
+            pointers[node] = NULL;
+        }
     }
 
     void copy_to(int node) {
         if(node != last_node) {
-            // Do copy
+            allocate(node);
+            session.mem_nodes[last_node]->memcpy_sync(pointers[node], session.mem_nodes[node], pointers[last_node], sizeof (T));
+            last_node = node;
         }
     }
 
-    T* get(size_t node) {
+    T* get(int node) {
         copy_to(node);
         return pointers[node];
+    }
+
+    void mark_dirty(int node) {
+        last_node = node;
+    }
+
+};
+
+template <typename T>
+struct MemBlock<T[]> {
+
+private:
+
+    int last_node;
+
+    T** pointers;
+
+    size_t* sizes;
+
+public:
+
+    explicit MemBlock() {
+        int num_nodes = session.mem_nodes.size();
+        pointers = new T* [num_nodes]();
+        sizes = new size_t [num_nodes]();
+        last_node = -1;
+    }
+
+    ~MemBlock() {
+        int num_nodes = session.mem_nodes.size();
+        for(int i = 0; i < num_nodes; ++i) {
+            if(pointers[i]) {
+                session.mem_nodes[i]->free(pointers[i]);
+            }
+        }
+        delete[] pointers;
+        delete[] sizes;
+    }
+
+    void allocate(int node, size_t size) {
+        // If you need to call the constructor, allocate it on CPU, then
+        //     new (get(CPU_node)) T [size]();
+        // to invoke the constructor properly.
+        if(sizes[node] != size) {
+            if(pointers[node]) {
+                session.mem_nodes[node]->free(pointers[node]);
+            }
+            pointers[node] = session.mem_nodes[node]->malloc(size * sizeof (T));
+            sizes[node] = size;
+        }
+        if(last_node == -1) {
+            last_node = node;
+        }
+    }
+
+    void resize(int node, size_t size) {
+        if(!pointers[node]) {
+            pointers[node] = session.mem_nodes[node]->malloc(size * sizeof (T));
+            sizes[node] = size;
+        } else {
+            T* new_ptr = session.mem_nodes[node]->malloc(size * sizeof (T));
+            session.mem_nodes[node]->memcpy_sync(new_ptr, pointers[node], session.mem_nodes[node], size < sizes[node] ? size : sizes[node]);
+            session.mem_nodes[node]->free(pointers[node]);
+            pointers[node] = new_ptr;
+            sizes[node] = size;
+        }
+        if(last_node == -1) {
+            last_node = node;
+        }
+    }
+
+    void free(int node) {
+        if(node != last_node) {
+            session.mem_nodes[node]->free(pointers[node]);
+            pointers[node] = NULL;
+            sizes[node] = 0;
+        }
+    }
+
+    void copy_to(int node) {
+        if(node != last_node) {
+            allocate(node, sizes[last_node]);
+            session.mem_nodes[last_node]->memcpy_sync(pointers[node], session.mem_nodes[node], pointers[last_node], sizes[last_node] * sizeof (T));
+            last_node = node;
+        }
+    }
+
+    T* get(int node) {
+        copy_to(node);
+        return pointers[node];
+    }
+
+    size_t size(int node) {
+        if(!pointers[node]) {
+            copy_to(node);
+        }
+        return sizes[node];
+    }
+
+    void mark_dirty(int node) {
+        last_node = node;
     }
 
 };

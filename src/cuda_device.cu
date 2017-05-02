@@ -23,7 +23,7 @@ namespace pti {
 CudaDevice::CudaDevice(int cuda_device, int mem_node) {
     struct cudaDeviceProp prop;
     cudaGetDeviceProperties(&prop, cuda_device);
-    this->name = "GPU: ";
+    this->name = "CUDA: ";
     this->name += prop.name;
     this->mem_node = mem_node;
     this->cuda_device = cuda_device;
