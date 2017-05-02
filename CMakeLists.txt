@@ -81,4 +81,4 @@ if(BUILD_STATIC)
 endif()
 
 #add_subdirectory("examples")
-#add_subdirectory("tests")
+add_subdirectory("tests")

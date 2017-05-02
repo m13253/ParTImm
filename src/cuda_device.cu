@@ -16,20 +16,17 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <ParTI/devices.hpp>
+#include <ParTI/device.hpp>
 
 namespace pti {
 
-Devices::~Devices() {
-}
-
-size_t Devices::add_memory_node(std::shared_ptr<MemNode> node) {
-    memory_nodes.push_back(std::move(node));
-    return memory_nodes.size() - 1;
-}
-
-MemNode* Devices::get_memory_node(size_t device_index) {
-    return memory_nodes[device_index].get();
+CudaDevice::CudaDevice(int cuda_device, int mem_node) {
+    struct cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, cuda_device);
+    this->name = "GPU: ";
+    this->name += prop.name;
+    this->mem_node = mem_node;
+    this->cuda_device = cuda_device;
 }
 
 }

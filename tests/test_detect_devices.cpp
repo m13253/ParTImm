@@ -16,49 +16,9 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef PTI_MEMBLOCK_INCLUDED
-#define PTI_MEMBLOCK_INCLUDED
+#include <ParTI/session.hpp>
 
-#include <cstddef>
-
-namespace pti {
-
-template <typename T>
-struct MemBlock {
-
-private:
-
-    int num_nodes;
-
-    int last_node;
-
-    T** pointers;
-
-public:
-
-    explicit MemBlock(int num_nodes) {
-        this->num_nodes = num_nodes;
-        this->last_node = -1;
-        pointers = new T* [num_nodes];
-    }
-
-    ~MemBlock() {
-        delete[] pointers;
-    }
-
-    void copy_to(int node) {
-        if(node != last_node) {
-            // Do copy
-        }
-    }
-
-    T* get(size_t node) {
-        copy_to(node);
-        return pointers[node];
-    }
-
-};
-
+int main() {
+    pti::session.print_devices();
+    return 0;
 }
-
-#endif

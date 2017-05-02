@@ -16,31 +16,38 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef PTI_MEMBLOCK_INCLUDED
-#define PTI_MEMBLOCK_INCLUDED
+#ifndef PTI_SESSION_INCLUDED
+#define PTI_SESSION_INCLUDED
 
 #include <cstddef>
 #include <memory>
 #include <vector>
-#include <ParTI/memnode.hpp>
 
 namespace pti {
 
-struct Devices {
+struct Device;
 
-    std::vector<std::shared_ptr<MemNode>> memory_nodes;
+struct MemNode;
 
-public:
+struct Session {
 
-    ~Devices();
+    Session();
+    ~Session();
+    void print_devices() const;
 
-    size_t add_memory_node(std::shared_ptr<MemNode> node);
+    std::vector<Device*> devices;
+    std::vector<MemNode*> mem_nodes;
 
-    MemNode* get_memory_node(size_t device_index);
+private:
+    void detect_devices();
+    void detect_cuda_devices();
+    void detect_cl_devices();
+    int add_device(Device* device);
+    int add_mem_node(MemNode* mem_node);
 
 };
 
-extern Devices devices;
+extern Session session;
 
 }
 

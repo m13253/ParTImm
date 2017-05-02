@@ -27,11 +27,8 @@ namespace pti {
 struct MemNode {
 
     virtual void* malloc(size_t size) = 0;
-
     virtual void* realloc(void* ptr, size_t size) = 0;
-
     virtual void free(void* ptr) = 0;
-
     virtual void memcpy_sync(void* dest, MemNode& dest_node, void* src, size_t size) = 0;
     virtual void memcpy_sync(void* dest, void* src, MemNode& src_node, size_t size) = 0;
 
@@ -73,17 +70,11 @@ struct CpuMemNode : public MemNode {
 struct CudaMemNode : public MemNode {
 
     explicit CudaMemNode(int cuda_device);
-
     void* malloc(size_t size);
-
     void* realloc(void* ptr, size_t size);
-
     void free(void* ptr);
-
     void memcpy_sync(void* dest, MemNode& dest_node, void* src, size_t size);
     void memcpy_sync(void* dest, void* src, MemNode& src_node, size_t size);
-
-private:
 
     int cuda_device;
 
@@ -92,17 +83,11 @@ private:
 struct ClMemNode : public MemNode {
 
     explicit ClMemNode(void* cl_device);
-
     void* malloc(size_t size);
-
     void* realloc(void* ptr, size_t size);
-
     void free(void* ptr);
-
     void memcpy_sync(void* dest, MemNode& dest_node, void* src, size_t size);
     void memcpy_sync(void* dest, void* src, MemNode& src_node, size_t size);
-
-private:
 
     void* cl_device;
 

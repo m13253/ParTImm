@@ -16,46 +16,43 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef PTI_MEMBLOCK_INCLUDED
-#define PTI_MEMBLOCK_INCLUDED
+#ifndef PTI_DEVICE_INCLUDED
+#define PTI_DEVICE_INCLUDED
 
-#include <cstddef>
+#include <string>
 
 namespace pti {
 
-template <typename T>
-struct MemBlock {
+struct MemNode;
 
-private:
+struct Device {
 
-    int num_nodes;
+    std::string name;
+    int mem_node;
 
-    int last_node;
+};
 
-    T** pointers;
+struct CpuDevice : public Device {
 
-public:
+    CpuDevice(int cpu_core, int mem_node);
 
-    explicit MemBlock(int num_nodes) {
-        this->num_nodes = num_nodes;
-        this->last_node = -1;
-        pointers = new T* [num_nodes];
-    }
+    int cpu_core;
 
-    ~MemBlock() {
-        delete[] pointers;
-    }
+};
 
-    void copy_to(int node) {
-        if(node != last_node) {
-            // Do copy
-        }
-    }
+struct CudaDevice : public Device {
 
-    T* get(size_t node) {
-        copy_to(node);
-        return pointers[node];
-    }
+    CudaDevice(int cuda_device, int mem_node);
+
+    int cuda_device;
+
+};
+
+struct ClDevice : public Device {
+
+    ClDevice(void* cl_device, int mem_node);
+
+    void* cl_device;
 
 };
 

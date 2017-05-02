@@ -16,49 +16,24 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef PTI_MEMBLOCK_INCLUDED
-#define PTI_MEMBLOCK_INCLUDED
-
-#include <cstddef>
+#include <ParTI/session.hpp>
+#include <ParTI/device.hpp>
+#include <ParTI/memnode.hpp>
 
 namespace pti {
 
-template <typename T>
-struct MemBlock {
 
-private:
-
-    int num_nodes;
-
-    int last_node;
-
-    T** pointers;
-
-public:
-
-    explicit MemBlock(int num_nodes) {
-        this->num_nodes = num_nodes;
-        this->last_node = -1;
-        pointers = new T* [num_nodes];
+void Session::detect_cuda_devices() {
+    int num_cuda_devices = 0;
+    cudaGetDeviceCount(&num_cuda_devices);
+    for(int i = 0; i < num_cuda_devices; ++i) {
+        CudaMemNode* cuda_mem_node = new CudaMemNode(i);
+        int cuda_mem_node_id = add_mem_node(cuda_mem_node);
+        CudaDevice* cuda_device = new CudaDevice(i, cuda_mem_node_id);
+        add_device(cuda_device);
     }
-
-    ~MemBlock() {
-        delete[] pointers;
-    }
-
-    void copy_to(int node) {
-        if(node != last_node) {
-            // Do copy
-        }
-    }
-
-    T* get(size_t node) {
-        copy_to(node);
-        return pointers[node];
-    }
-
-};
-
 }
 
-#endif
+Session sess;
+
+}
