@@ -25,6 +25,7 @@ namespace pti {
 
 struct MemNode;
 
+/// A computing
 struct Device {
 
     std::string name;
@@ -48,6 +49,7 @@ struct CudaDevice : public Device {
 
 };
 
+// Not used
 struct ClDevice : public Device {
 
     ClDevice(void* cl_device, int mem_node);

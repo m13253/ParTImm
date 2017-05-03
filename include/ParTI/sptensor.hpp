@@ -46,8 +46,6 @@ public:
 
     SparseTensor(size_t nmodes, size_t const shape[], bool const mode_is_sparse[]);
 
-    ~SparseTensor();
-
 };
 
 }

@@ -80,6 +80,7 @@ struct CudaMemNode : public MemNode {
 
 };
 
+// Not used
 struct ClMemNode : public MemNode {
 
     explicit ClMemNode(void* cl_device);
