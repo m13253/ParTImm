@@ -16,39 +16,12 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef PTI_SPTENSOR_INCLUDED
-#define PTI_SPTENSOR_INCLUDED
-
-#include <cstddef>
-#include <ParTI/base_tensor.hpp>
-#include <ParTI/scalar.hpp>
-#include <ParTI/memblock.hpp>
+#ifndef PTI_SCALAR_INCLUDED
+#define PTI_SCALAR_INCLUDED
 
 namespace pti {
 
-struct SparseTensor : public BaseTensor {
-
-    MemBlock<bool[]> is_dense;
-
-    MemBlock<size_t[]> dense_order;
-
-    MemBlock<size_t[]> sparse_order;
-
-    MemBlock<size_t[]> strides;
-
-    size_t nnz;
-
-    MemBlock<size_t[]> indices;
-
-    MemBlock<Scalar[]> values;
-
-public:
-
-    SparseTensor(size_t nmodes, size_t const shape[], bool const mode_is_sparse[]);
-
-    ~SparseTensor();
-
-};
+typedef float Scalar;
 
 }
 

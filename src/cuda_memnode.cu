@@ -55,7 +55,7 @@ void CudaMemNode::free(void* ptr) {
     cudaSetDevice(old_device);
 }
 
-void CudaMemNode::memcpy_sync(void* dest, MemNode& dest_node, void* src, size_t size) {
+void CudaMemNode::memcpy_to(void* dest, MemNode& dest_node, void* src, size_t size) {
     if(CpuMemNode* cpu_dest_node = dynamic_cast<CpuMemNode*>(&dest_node)) {
         cudaSetDevice(cuda_device);
         cudaMemcpy(dest, src, size, cudaMemcpyDeviceToHost);
@@ -66,7 +66,7 @@ void CudaMemNode::memcpy_sync(void* dest, MemNode& dest_node, void* src, size_t 
     }
 }
 
-void CudaMemNode::memcpy_sync(void* dest, void* src, MemNode& src_node, size_t size) {
+void CudaMemNode::memcpy_from(void* dest, void* src, MemNode& src_node, size_t size) {
     if(CpuMemNode* cpu_src_node = dynamic_cast<CpuMemNode*>(&src_node)) {
         cudaSetDevice(cuda_device);
         cudaMemcpy(dest, src, size, cudaMemcpyHostToDevice);

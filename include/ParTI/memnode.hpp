@@ -29,8 +29,8 @@ struct MemNode {
     virtual void* malloc(size_t size) = 0;
     virtual void* realloc(void* ptr, size_t size) = 0;
     virtual void free(void* ptr) = 0;
-    virtual void memcpy_sync(void* dest, MemNode& dest_node, void* src, size_t size) = 0;
-    virtual void memcpy_sync(void* dest, void* src, MemNode& src_node, size_t size) = 0;
+    virtual void memcpy_to(void* dest, MemNode& dest_node, void* src, size_t size) = 0;
+    virtual void memcpy_from(void* dest, void* src, MemNode& src_node, size_t size) = 0;
 
 };
 
@@ -62,8 +62,8 @@ struct CpuMemNode : public MemNode {
         std::free(ptr);
     }
 
-    void memcpy_sync(void* dest, MemNode& dest_node, void* src, size_t size);
-    void memcpy_sync(void* dest, void* src, MemNode& src_node, size_t size);
+    void memcpy_to(void* dest, MemNode& dest_node, void* src, size_t size);
+    void memcpy_from(void* dest, void* src, MemNode& src_node, size_t size);
 
 };
 
@@ -73,8 +73,8 @@ struct CudaMemNode : public MemNode {
     void* malloc(size_t size);
     void* realloc(void* ptr, size_t size);
     void free(void* ptr);
-    void memcpy_sync(void* dest, MemNode& dest_node, void* src, size_t size);
-    void memcpy_sync(void* dest, void* src, MemNode& src_node, size_t size);
+    void memcpy_to(void* dest, MemNode& dest_node, void* src, size_t size);
+    void memcpy_from(void* dest, void* src, MemNode& src_node, size_t size);
 
     int cuda_device;
 
@@ -86,8 +86,8 @@ struct ClMemNode : public MemNode {
     void* malloc(size_t size);
     void* realloc(void* ptr, size_t size);
     void free(void* ptr);
-    void memcpy_sync(void* dest, MemNode& dest_node, void* src, size_t size);
-    void memcpy_sync(void* dest, void* src, MemNode& src_node, size_t size);
+    void memcpy_to(void* dest, MemNode& dest_node, void* src, size_t size);
+    void memcpy_from(void* dest, void* src, MemNode& src_node, size_t size);
 
     void* cl_device;
 

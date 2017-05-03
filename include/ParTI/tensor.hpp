@@ -22,17 +22,17 @@
 #include <cstddef>
 #include <ParTI/base_tensor.hpp>
 #include <ParTI/memblock.hpp>
+#include <ParTI/scalar.hpp>
 
 namespace pti {
 
-template <typename T>
-struct Tensor : public BaseTensor<T> {
+struct Tensor : public BaseTensor {
 
     MemBlock<size_t[]> strides;
 
     MemBlock<size_t[]> storage_order;
 
-    MemBlock<T[]> values;
+    MemBlock<Scalar[]> values;
 
 };
 

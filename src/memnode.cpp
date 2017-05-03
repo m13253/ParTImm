@@ -22,12 +22,12 @@
 
 namespace pti {
 
-void CpuMemNode::memcpy_sync(void* dest, MemNode& dest_node, void* src, size_t size) {
+void CpuMemNode::memcpy_to(void* dest, MemNode& dest_node, void* src, size_t size) {
     if(dynamic_cast<CpuMemNode*>(&dest_node)) {
         std::memcpy(dest, src, size);
     } else if(CudaMemNode* cuda_dest_node = dynamic_cast<CudaMemNode*>(&dest_node)) {
 #ifdef PARTI_USE_CUDA
-        cuda_dest_node->memcpy_sync(dest, src, *this, size);
+        cuda_dest_node->memcpy_from(dest, src, *this, size);
 #else
         throw std::logic_error("CUDA not enabled");
 #endif
@@ -36,12 +36,12 @@ void CpuMemNode::memcpy_sync(void* dest, MemNode& dest_node, void* src, size_t s
     }
 }
 
-void CpuMemNode::memcpy_sync(void* dest, void* src, pti::MemNode& src_node, size_t size) {
+void CpuMemNode::memcpy_from(void* dest, void* src, pti::MemNode& src_node, size_t size) {
     if(dynamic_cast<CpuMemNode*>(&src_node)) {
         std::memcpy(dest, src, size);
     } else if(CudaMemNode* cuda_src_node = dynamic_cast<CudaMemNode*>(&src_node)) {
 #ifdef PARTI_USE_CUDA
-        cuda_src_node->memcpy_sync(dest, *this, src, size);
+        cuda_src_node->memcpy_to(dest, *this, src, size);
 #else
         throw std::logic_error("CUDA not enabled");
 #endif

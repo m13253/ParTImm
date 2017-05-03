@@ -24,10 +24,9 @@
 
 namespace pti {
 
-template <typename T>
 struct BaseTensor {
 
-    size_t num_modes;
+    size_t nmodes;
 
     MemBlock<size_t[]> shape;
 
