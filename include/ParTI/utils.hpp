@@ -19,11 +19,26 @@
 #ifndef PTI_UTILS_INCLUDED
 #define PTI_UTILS_INCLUDED
 
+#include <string>
+
 namespace pti {
 
 template <typename T>
 inline T ceil_div(T const num, T const deno) {
     return num ? (num - 1) / deno + 1 : 0;
+}
+
+template <typename T>
+inline std::string array_to_string(T const array[], size_t length, std::string const& delim = ", ") {
+    if(length == 0) {
+        return std::string();
+    }
+    std::string result = std::to_string(array[0]);
+    for(size_t i = 1; i < length; ++i) {
+        result += delim;
+        result += std::to_string(array[i]);
+    }
+    return result;
 }
 
 }

@@ -17,28 +17,29 @@
 */
 
 #include <ParTI/sptensor.hpp>
-#include <ParTI/utils.hpp>
-#include <cstring>
+#include <cstdio>
+#include <memory>
 
 namespace pti {
 
-void SparseTensor::index_to_coord(size_t coord[], size_t index) {
-    bool* is_dense = this->is_dense.get(0);
-    for(size_t m = 0; m < nmodes; ++m) {
-        if(!is_dense[m]) {
-            coord[m] = this->indices[m].get(0)[index / chunk_size];
-        }
+void SparseTensor::append(size_t const coord[], Scalar value) {
+    values.copy_to(0);
+    if(values.size() == num_chunks * chunk_size) { // Need reallocation
+        size_t new_size = values.size() < 8 ?
+            values.size() + values.size() / 2 :
+            8;
+        values.resize(0, new_size);
     }
-    if(chunk_size != 1) { // Semi sparse tensor
-        size_t offset = index % chunk_size;
-        size_t* dense_order = this->dense_order.get(0);
-        size_t* strides = this->strides.get(0);
-        for(size_t o = this->dense_order.size()-1; o != 0; --o) {
-            size_t m = dense_order[o];
-            coord[m] = offset % strides[m];
-            offset /= strides[m];
+
+    if(chunk_size == 1) { // Fast code path fore pure sparse tensor
+        size_t next_offset = num_chunks;
+        for(size_t m = 0; m < nmodes; ++m) {
+            indices[m].get(0)[next_offset] = coord[m];
         }
-        coord[dense_order[0]] = offset;
+        values.get(0)[next_offset] = value;
+        ++num_chunks;
+    } else {
+        throw std::logic_error("Unimplemented");
     }
 }
 

@@ -20,6 +20,7 @@
 #define PTI_SPTENSOR_INCLUDED
 
 #include <cstddef>
+#include <cstdio>
 #include <ParTI/base_tensor.hpp>
 #include <ParTI/scalar.hpp>
 #include <ParTI/memblock.hpp>
@@ -52,7 +53,11 @@ public:
 
     void index_to_coord(size_t coord[], size_t index);
 
-    void coord_to_index(size_t index, size_t const coord[]);
+    void dump(std::FILE* fp, size_t start_index = 0);
+
+    static SparseTensor load(std::FILE* fp, size_t start_index = 0);
+
+    void append(size_t const coord[], Scalar value);
 
 };
 

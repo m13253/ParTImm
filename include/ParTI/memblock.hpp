@@ -175,7 +175,7 @@ public:
     }
 
     size_t size() const {
-        return sizes[last_node];
+        return last_node != -1 ? sizes[last_node] : 0;
     }
 
     void mark_dirty(int node) {
