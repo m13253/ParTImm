@@ -36,15 +36,23 @@ struct SparseTensor : public BaseTensor {
 
     MemBlock<size_t[]> strides;
 
-    size_t nnz;
+    size_t chunk_size; // product of strides
 
-    MemBlock<size_t[]> indices;
+    size_t num_chunks;
+
+    MemBlock<size_t[]>* indices;
 
     MemBlock<Scalar[]> values;
 
 public:
 
     SparseTensor(size_t nmodes, size_t const shape[], bool const mode_is_sparse[]);
+
+    ~SparseTensor();
+
+    void index_to_coord(size_t coord[], size_t index);
+
+    void coord_to_index(size_t index, size_t const coord[]);
 
 };
 

@@ -73,8 +73,20 @@ SparseTensor::SparseTensor(size_t nmodes, size_t const shape[], bool const is_de
         }
     }
 
-    // nnz
-    this->nnz = 0;
+    this->chunk_size = 1;
+    for(size_t m = 0; m < nmodes; ++m) {
+        this->chunk_size *= strides[m];
+    }
+
+    // num_chunks
+    this->num_chunks = 0;
+
+    // indices
+    this->indices = new MemBlock<size_t[]> [nmodes];
+}
+
+SparseTensor::~SparseTensor() {
+    delete[] this->indices;
 }
 
 }

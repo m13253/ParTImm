@@ -174,11 +174,8 @@ public:
         return pointers[node];
     }
 
-    size_t size(int node) {
-        if(!pointers[node]) {
-            copy_to(node);
-        }
-        return sizes[node];
+    size_t size() const {
+        return sizes[last_node];
     }
 
     void mark_dirty(int node) {
