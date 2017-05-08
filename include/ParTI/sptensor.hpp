@@ -51,13 +51,16 @@ public:
 
     ~SparseTensor();
 
-    void index_to_coord(size_t coord[], size_t index);
+    void offset_to_indices(size_t indices[], size_t offset);
 
     void dump(std::FILE* fp, size_t start_index = 0);
 
     static SparseTensor load(std::FILE* fp, size_t start_index = 0);
 
     void append(size_t const coord[], Scalar value);
+
+    void sort_index();
+    void sort_index(size_t const sparse_order[]);
 
 };
 

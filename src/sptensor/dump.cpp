@@ -29,7 +29,7 @@ void SparseTensor::dump(std::FILE* fp, size_t start_index) {
 
     std::unique_ptr<size_t[]> coordinate(new size_t [nmodes]);
     for(size_t i = 0; i < num_chunks * chunk_size; ++i) {
-        index_to_coord(coordinate.get(), i);
+        offset_to_indices(coordinate.get(), i);
         bool out_of_range = false;
         for(size_t m = 0; m < nmodes; ++m) {
             if(coordinate[m] > shape.get(0)[m]) {
