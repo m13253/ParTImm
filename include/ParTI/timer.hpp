@@ -16,19 +16,44 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <string>
-#include <ParTI/device.hpp>
+#ifndef PTI_TIMER_INCLUDED
+#define PTI_TIMER_INCLUDED
+
+#include <cstddef>
+#include <ParTI/memblock.hpp>
+
+struct timespec;
 
 namespace pti {
 
-Device::~Device() {
+struct CudaDevice;
+
+struct Timer {
+
+    Timer(int device);
+    ~Timer();
+    void start();
+    void stop();
+    double elapsed_time() const;
+    double print_elapsed_time(char const* name) const;
+
+private:
+
+    int device;
+    CudaDevice* cuda_dev;
+    struct timespec start_timespec;
+    struct timespec stop_timespec;
+    void* cuda_start_event;
+    void* cuda_stop_event;
+
+    void cuda_init();
+    void cuda_fini();
+    void cuda_start();
+    void cuda_stop();
+    double cuda_elapsed_time() const;
+
+};
+
 }
 
-CpuDevice::CpuDevice(int cpu_core, int mem_node) {
-    this->name = "CPU: Core ";
-    this->name += std::to_string(cpu_core);
-    this->mem_node = mem_node;
-    this->cpu_core = cpu_core;
-}
-
-}
+#endif
