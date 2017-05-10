@@ -23,9 +23,19 @@
 namespace pti {
 
 void SparseTensor::append(size_t const coord[], Scalar value) {
+    for(size_t m = 0; m < nmodes; ++m) {
+        indices[m].copy_to(0);
+        if(indices[m].size() == num_chunks) { // Need reallocation
+            size_t new_size = indices[m].size() >= 8 ?
+                indices[m].size() + indices[m].size() / 2 :
+                8;
+            indices[m].resize(0, new_size);
+        }
+    }
+
     values.copy_to(0);
     if(values.size() == num_chunks * chunk_size) { // Need reallocation
-        size_t new_size = values.size() < 8 ?
+        size_t new_size = values.size() >= 8 ?
             values.size() + values.size() / 2 :
             8;
         values.resize(0, new_size);

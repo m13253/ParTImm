@@ -31,12 +31,9 @@ SparseTensor SparseTensor::load(std::FILE* fp, size_t start_index) {
         std::fscanf(fp, "%zu", &coordinate[m]);
     }
 
-    std::unique_ptr<bool[]> mode_is_sparse(new bool [nmodes]);
-    for(size_t m = 0; m < nmodes; ++m) {
-        mode_is_sparse[m] = true;
-    }
+    std::unique_ptr<bool[]> mode_is_dense(new bool [nmodes]());
 
-    SparseTensor tensor(nmodes, coordinate.get(), mode_is_sparse.get());
+    SparseTensor tensor(nmodes, coordinate.get(), mode_is_dense.get());
 
     for(;;) {
         int io_result;

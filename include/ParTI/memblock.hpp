@@ -74,13 +74,19 @@ public:
     void copy_to(int node) {
         if(node != last_node) {
             allocate(node);
-            session.mem_nodes[last_node]->memcpy_to(pointers[node], *session.mem_nodes[node], pointers[last_node], sizeof (T));
+            if(last_node != -1) {
+                session.mem_nodes[last_node]->memcpy_to(pointers[node], *session.mem_nodes[node], pointers[last_node], sizeof (T));
+            }
             last_node = node;
         }
     }
 
     T* get(int node) {
         copy_to(node);
+        return pointers[node];
+    }
+
+    T* fget(int node) const {
         return pointers[node];
     }
 
@@ -163,14 +169,20 @@ public:
 
     void copy_to(int node) {
         if(node != last_node) {
-            allocate(node, sizes[last_node]);
-            session.mem_nodes[last_node]->memcpy_to(pointers[node], *session.mem_nodes[node], pointers[last_node], sizes[last_node] * sizeof (T));
+            allocate(node, sizes[node]);
+            if(last_node != -1) {
+                session.mem_nodes[last_node]->memcpy_to(pointers[node], *session.mem_nodes[node], pointers[last_node], sizes[last_node] * sizeof (T));
+            }
             last_node = node;
         }
     }
 
     T* get(int node) {
         copy_to(node);
+        return pointers[node];
+    }
+
+    T* fget(int node) const {
         return pointers[node];
     }
 

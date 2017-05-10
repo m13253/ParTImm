@@ -33,7 +33,7 @@ SparseTensor::SparseTensor(size_t nmodes, size_t const shape[], bool const is_de
 
     // is_dense
     this->is_dense.allocate(0, nmodes);
-    std::memcpy(this->is_dense.get(0), shape, nmodes * sizeof (size_t));
+    std::memcpy(this->is_dense.get(0), is_dense, nmodes * sizeof (bool));
 
     size_t dense_modes = 0;
     for(size_t m = 0; m < nmodes; ++m) {
@@ -69,10 +69,11 @@ SparseTensor::SparseTensor(size_t nmodes, size_t const shape[], bool const is_de
         if(is_dense[m]) {
             strides[m] = ceil_div<size_t>(shape[m], 8) * 8;
         } else {
-            strides[m] = 0;
+            strides[m] = 1;
         }
     }
 
+    // chunk_size
     this->chunk_size = 1;
     for(size_t m = 0; m < nmodes; ++m) {
         this->chunk_size *= strides[m];
