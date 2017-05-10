@@ -21,6 +21,7 @@
 #include <time.h>
 #include <ParTI/session.hpp>
 #include <ParTI/device.hpp>
+#include <ParTI/error.hpp>
 
 namespace pti {
 
@@ -31,7 +32,7 @@ Timer::Timer(int device) {
 #ifdef PARTI_USE_CUDA
         cuda_init();
 #else
-        throw std::logic_error("CUDA support not enabled");
+        ptiCheckCUDAError(true);
 #endif
     }
 }
@@ -40,8 +41,6 @@ Timer::~Timer() {
     if(cuda_dev) {
 #ifdef PARTI_USE_CUDA
         cuda_fini();
-#else
-        throw std::logic_error("CUDA support not enabled");
 #endif
     }
 }
@@ -51,7 +50,7 @@ void Timer::start() {
 #ifdef PARTI_USE_CUDA
         cuda_start();
 #else
-        throw std::logic_error("CUDA support not enabled");
+        ptiCheckCUDAError(true);
 #endif
     } else {
         clock_gettime(CLOCK_MONOTONIC, &start_timespec);
@@ -63,7 +62,7 @@ void Timer::stop() {
 #ifdef PARTI_USE_CUDA
         cuda_stop();
 #else
-        throw std::logic_error("CUDA support not enabled");
+        ptiCheckCUDAError(true);
 #endif
     } else {
         clock_gettime(CLOCK_MONOTONIC, &stop_timespec);
@@ -75,7 +74,7 @@ double Timer::elapsed_time() const {
 #ifdef PARTI_USE_CUDA
         return cuda_elapsed_time();
 #else
-        throw std::logic_error("CUDA support not enabled");
+        ptiCheckCUDAError(true);
 #endif
     } else {
         return stop_timespec.tv_sec - start_timespec.tv_sec

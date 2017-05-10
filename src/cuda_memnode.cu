@@ -77,5 +77,4 @@ void CudaMemNode::memcpy_from(void* dest, void* src, MemNode& src_node, size_t s
     }
 }
 
-
 }

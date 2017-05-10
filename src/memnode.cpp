@@ -19,6 +19,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <ParTI/memnode.hpp>
+#include <ParTI/error.hpp>
 
 namespace pti {
 
@@ -29,10 +30,11 @@ void CpuMemNode::memcpy_to(void* dest, MemNode& dest_node, void* src, size_t siz
 #ifdef PARTI_USE_CUDA
         cuda_dest_node->memcpy_from(dest, src, *this, size);
 #else
-        throw std::logic_error("CUDA not enabled");
+        (void) cuda_dest_node;
+        ptiCheckCUDAError(true);
 #endif
     } else {
-        throw std::logic_error("Unknown memory node type");
+        ptiCheckError(true, 1, "Unknown memory node type");
     }
 }
 
@@ -43,11 +45,38 @@ void CpuMemNode::memcpy_from(void* dest, void* src, pti::MemNode& src_node, size
 #ifdef PARTI_USE_CUDA
         cuda_src_node->memcpy_to(dest, *this, src, size);
 #else
-        throw std::logic_error("CUDA not enabled");
+        (void) cuda_src_node;
+        ptiCheckCUDAError(true);
 #endif
     } else {
-        throw std::logic_error("Unknown memory node type");
+        ptiCheckError(true, 1, "Unknown memory node type");
     }
 }
+
+#ifndef PARTI_USE_CUDA
+CudaMemNode::CudaMemNode(int) {
+    ptiCheckCUDAError(true);
+}
+
+void* CudaMemNode::malloc(size_t) {
+    ptiCheckCUDAError(true);
+}
+
+void* CudaMemNode::realloc(void*, size_t) {
+    ptiCheckCUDAError(true);
+}
+
+void CudaMemNode::free(void*) {
+    ptiCheckCUDAError(true);
+}
+
+void CudaMemNode::memcpy_to(void*, MemNode&, void*, size_t) {
+    ptiCheckCUDAError(true);
+}
+
+void CudaMemNode::memcpy_from(void*, void*, MemNode&, size_t) {
+    ptiCheckCUDAError(true);
+}
+#endif
 
 }
