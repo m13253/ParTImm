@@ -52,14 +52,16 @@ void Session::detect_devices() {
 
 void Session::print_devices() const {
     size_t num_devices = devices.size();
-    std::fprintf(stderr, "  ID  Device name                                                  Memory node\n");
-    std::fprintf(stderr, "================================================================================\n");
+    std::fprintf(stderr, "\x1b[7m  ID  Device name                                                  Memory node  \x1b[27m\n");
     for(size_t i = 0; i < num_devices; ++i) {
         Device const& device = *devices[i];
         std::fprintf(stderr, "%4zu  %-67s %4d\n", i, device.name.c_str(), device.mem_node);
     }
-    std::fprintf(stderr, "================================================================================\n");
-    std::fprintf(stderr, "%zu device(s) detected.\n", num_devices);
+    if(num_devices != 1) {
+        std::fprintf(stderr, "\x1b[1m%zu devices detected.\x1b[21m\n", num_devices);
+    } else {
+        std::fprintf(stderr, "\x1b[1m%zu device detected.\x1b[21m\n", num_devices);
+    }
 }
 
 int Session::add_device(Device* device) {
