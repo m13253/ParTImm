@@ -17,12 +17,17 @@
 */
 
 #include <ParTI/device.hpp>
+#include <ParTI/error.hpp>
 
 namespace pti {
 
 CudaDevice::CudaDevice(int cuda_device, int mem_node) {
+    cudaError_t error;
+
     struct cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, cuda_device);
+    error = cudaGetDeviceProperties(&prop, cuda_device);
+    ptiCheckCUDAError(error);
+
     this->name = "CUDA: ";
     this->name += prop.name;
     this->mem_node = mem_node;

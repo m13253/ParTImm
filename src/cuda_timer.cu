@@ -16,16 +16,22 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <cstdio>
 #include <ParTI/timer.hpp>
-#include <ParTI/session.hpp>
+#include <cstdio>
 #include <ParTI/device.hpp>
+#include <ParTI/error.hpp>
+#include <ParTI/session.hpp>
 
 namespace pti {
 
 void Timer::cuda_init() {
-    cudaEventCreate((cudaEvent_t*) &cuda_start_event);
-    cudaEventCreate((cudaEvent_t*) &cuda_stop_event);
+    cudaError_t error;
+
+    error = cudaEventCreate((cudaEvent_t*) &cuda_start_event);
+    ptiCheckCUDAError(error);
+
+    error = cudaEventCreate((cudaEvent_t*) &cuda_stop_event);
+    ptiCheckCUDAError(error);
 }
 
 void Timer::cuda_fini() {
@@ -34,15 +40,43 @@ void Timer::cuda_fini() {
 }
 
 void Timer::cuda_start() {
-    cudaSetDevice(cuda_dev->cuda_device);
-    cudaEventRecord((cudaEvent_t) cuda_start_event);
-    cudaEventSynchronize((cudaEvent_t) cuda_start_event);
+    cudaError_t error;
+
+    int old_device;
+    error = cudaGetDevice(&old_device);
+    ptiCheckCUDAError(error);
+
+    error = cudaSetDevice(cuda_dev->cuda_device);
+    ptiCheckCUDAError(error);
+
+    error = cudaEventRecord((cudaEvent_t) cuda_start_event);
+    ptiCheckCUDAError(error);
+
+    error = cudaEventSynchronize((cudaEvent_t) cuda_start_event);
+    ptiCheckCUDAError(error);
+
+    error = cudaSetDevice(old_device);
+    ptiCheckCUDAError(error);
 }
 
 void Timer::cuda_stop() {
-    cudaSetDevice(cuda_dev->cuda_device);
-    cudaEventRecord((cudaEvent_t) cuda_stop_event);
-    cudaEventSynchronize((cudaEvent_t) cuda_stop_event);
+    cudaError_t error;
+
+    int old_device;
+    error = cudaGetDevice(&old_device);
+    ptiCheckCUDAError(error);
+
+    error = cudaSetDevice(cuda_dev->cuda_device);
+    ptiCheckCUDAError(error);
+
+    error = cudaEventRecord((cudaEvent_t) cuda_stop_event);
+    ptiCheckCUDAError(error);
+
+    error = cudaEventSynchronize((cudaEvent_t) cuda_stop_event);
+    ptiCheckCUDAError(error);
+
+    error = cudaSetDevice(old_device);
+    ptiCheckCUDAError(error);
 }
 
 double Timer::cuda_elapsed_time() const {

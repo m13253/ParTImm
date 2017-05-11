@@ -16,9 +16,9 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <ParTI/memnode.hpp>
 #include <cstring>
 #include <stdexcept>
-#include <ParTI/memnode.hpp>
 #include <ParTI/error.hpp>
 
 namespace pti {

@@ -18,8 +18,8 @@
 
 #include <ParTI/error.hpp>
 #include <cerrno>
-#include <cstring>
 #include <cstdio>
+#include <cstring>
 
 namespace pti {
 

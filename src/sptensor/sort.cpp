@@ -17,10 +17,10 @@
 */
 
 #include <ParTI/sptensor.hpp>
+#include <cstdio>
 #include <cstring>
 #include <memory>
 #include <utility>
-#include <cstdio>
 
 namespace pti {
 

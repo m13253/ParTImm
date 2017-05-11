@@ -16,8 +16,8 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdexcept>
 #include <ParTI/memnode.hpp>
+#include <ParTI/error.hpp>
 
 namespace pti {
 
@@ -27,15 +27,21 @@ CudaMemNode::CudaMemNode(int cuda_device) {
 
 void* CudaMemNode::malloc(size_t size) {
     cudaError_t error;
+
     int old_device;
     error = cudaGetDevice(&old_device);
-    if(error) { throw std::bad_alloc(); }
+    ptiCheckCUDAError(error);
+
     error = cudaSetDevice(cuda_device);
-    if(error) { throw std::bad_alloc(); }
+    ptiCheckCUDAError(error);
+
     void* ptr;
     error = cudaMalloc(&ptr, size);
-    if(error) { throw std::bad_alloc(); }
-    cudaSetDevice(old_device);
+    ptiCheckCUDAError(error);
+
+    error = cudaSetDevice(old_device);
+    ptiCheckCUDAError(error);
+
     return ptr;
 }
 
@@ -45,35 +51,48 @@ void* CudaMemNode::realloc(void*, size_t) {
 
 void CudaMemNode::free(void* ptr) {
     cudaError_t error;
+
     int old_device;
     error = cudaGetDevice(&old_device);
-    if(error) { throw std::bad_alloc(); }
+    ptiCheckCUDAError(error);
+
     error = cudaSetDevice(cuda_device);
-    if(error) { throw std::bad_alloc(); }
+    ptiCheckCUDAError(error);
+
     error = cudaFree(ptr);
-    if(error) { throw std::bad_alloc(); }
-    cudaSetDevice(old_device);
+    ptiCheckCUDAError(error);
+
+    error = cudaSetDevice(old_device);
+    ptiCheckCUDAError(error);
 }
 
 void CudaMemNode::memcpy_to(void* dest, MemNode& dest_node, void* src, size_t size) {
+    cudaError_t error;
     if(CpuMemNode* cpu_dest_node = dynamic_cast<CpuMemNode*>(&dest_node)) {
-        cudaSetDevice(cuda_device);
-        cudaMemcpy(dest, src, size, cudaMemcpyDeviceToHost);
+        error = cudaSetDevice(cuda_device);
+        ptiCheckCUDAError(error);
+        error = cudaMemcpy(dest, src, size, cudaMemcpyDeviceToHost);
+        ptiCheckCUDAError(error);
     } else if(CudaMemNode* cuda_dest_node = dynamic_cast<CudaMemNode*>(&dest_node)) {
-        cudaMemcpyPeer(dest, cuda_dest_node->cuda_device, src, cuda_device, size);
+        error = cudaMemcpyPeer(dest, cuda_dest_node->cuda_device, src, cuda_device, size);
+        ptiCheckCUDAError(error);
     } else {
-        throw std::logic_error("Unknown memory node type");
+        ptiCheckError(true, 1, "Unknown memory node type");
     }
 }
 
 void CudaMemNode::memcpy_from(void* dest, void* src, MemNode& src_node, size_t size) {
+    cudaError_t error;
     if(CpuMemNode* cpu_src_node = dynamic_cast<CpuMemNode*>(&src_node)) {
-        cudaSetDevice(cuda_device);
-        cudaMemcpy(dest, src, size, cudaMemcpyHostToDevice);
+        error = cudaSetDevice(cuda_device);
+        ptiCheckCUDAError(error);
+        error = cudaMemcpy(dest, src, size, cudaMemcpyHostToDevice);
+        ptiCheckCUDAError(error);
     } else if(CudaMemNode* cuda_src_node = dynamic_cast<CudaMemNode*>(&src_node)) {
-        cudaMemcpyPeer(dest, cuda_device, src, cuda_src_node->cuda_device, size);
+        error = cudaMemcpyPeer(dest, cuda_device, src, cuda_src_node->cuda_device, size);
+        ptiCheckCUDAError(error);
     } else {
-        throw std::logic_error("Unknown memory node type");
+        ptiCheckError(true, 1, "Unknown memory node type");
     }
 }
 

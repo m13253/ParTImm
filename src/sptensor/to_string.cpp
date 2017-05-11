@@ -17,9 +17,9 @@
 */
 
 #include <ParTI/sptensor.hpp>
-#include <ParTI/utils.hpp>
 #include <algorithm>
 #include <string>
+#include <ParTI/utils.hpp>
 
 namespace pti {
 

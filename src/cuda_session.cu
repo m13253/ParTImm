@@ -18,14 +18,18 @@
 
 #include <ParTI/session.hpp>
 #include <ParTI/device.hpp>
+#include <ParTI/error.hpp>
 #include <ParTI/memnode.hpp>
 
 namespace pti {
 
-
 void Session::detect_cuda_devices() {
+    cudaError_t error;
+
     int num_cuda_devices = 0;
-    cudaGetDeviceCount(&num_cuda_devices);
+    error = cudaGetDeviceCount(&num_cuda_devices);
+    ptiCheckCUDAError(error);
+
     for(int i = 0; i < num_cuda_devices; ++i) {
         CudaMemNode* cuda_mem_node = new CudaMemNode(i);
         int cuda_mem_node_id = add_mem_node(cuda_mem_node);

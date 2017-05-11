@@ -17,15 +17,21 @@
 */
 
 #include <ParTI/sptensor.hpp>
-#include <ParTI/utils.hpp>
 #include <cstdio>
 #include <memory>
+#include <ParTI/error.hpp>
+#include <ParTI/utils.hpp>
 
 namespace pti {
 
 void SparseTensor::dump(std::FILE* fp, size_t start_index) {
-    std::fprintf(fp, "%zu\n", nmodes);
-    std::fprintf(fp, "%s\n", array_to_string(shape.get(0), shape.size(), "\t").c_str());
+    int io_result;
+
+    io_result = std::fprintf(fp, "%zu\n", nmodes);
+    ptiCheckOSError(io_result < 0);
+
+    io_result = std::fprintf(fp, "%s\n", array_to_string(shape.get(0), shape.size(), "\t").c_str());
+    ptiCheckOSError(io_result < 0);
 
     std::unique_ptr<size_t[]> coordinate(new size_t [nmodes]);
     for(size_t i = 0; i < num_chunks * chunk_size; ++i) {
@@ -39,9 +45,10 @@ void SparseTensor::dump(std::FILE* fp, size_t start_index) {
             coordinate[m] += start_index;
         }
         if(!out_of_range) {
-            std::fprintf(fp, "%s\t%.16lg\n",
+            io_result = std::fprintf(fp, "%s\t%.16lg\n",
                 array_to_string(coordinate.get(), nmodes, "\t").c_str(),
                 (double) values.get(0)[i]);
+            ptiCheckOSError(io_result < 0);
         }
     }
 }

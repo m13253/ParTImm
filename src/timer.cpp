@@ -19,9 +19,9 @@
 #include <ParTI/timer.hpp>
 #include <cstdio>
 #include <time.h>
-#include <ParTI/session.hpp>
 #include <ParTI/device.hpp>
 #include <ParTI/error.hpp>
+#include <ParTI/session.hpp>
 
 namespace pti {
 

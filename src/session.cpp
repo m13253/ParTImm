@@ -16,9 +16,9 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <ParTI/session.hpp>
 #include <cstdio>
 #include <thread>
-#include <ParTI/session.hpp>
 #include <ParTI/device.hpp>
 #include <ParTI/memnode.hpp>
 
