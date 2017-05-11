@@ -45,7 +45,7 @@ void Timer::cuda_stop() {
     cudaEventSynchronize((cudaEvent_t) cuda_stop_event);
 }
 
-double Timer::elapsed_time() const {
+double Timer::cuda_elapsed_time() const {
     float elapsed;
     if(cudaEventElapsedTime(&elapsed, (cudaEvent_t) cuda_start_event, (cudaEvent_t) cuda_stop_event) != 0) {
         return NAN;
