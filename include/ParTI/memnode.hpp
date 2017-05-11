@@ -26,6 +26,9 @@ namespace pti {
 
 struct MemNode {
 
+    virtual ~MemNode() {
+    }
+
     virtual void* malloc(size_t size) = 0;
     virtual void* realloc(void* ptr, size_t size) = 0;
     virtual void free(void* ptr) = 0;

@@ -32,6 +32,9 @@ Session::~Session() {
     for(Device* device : devices) {
         delete device;
     }
+    for(MemNode* mem_node : mem_nodes) {
+        delete mem_node;
+    }
 }
 
 void Session::detect_devices() {

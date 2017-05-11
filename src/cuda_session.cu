@@ -24,11 +24,8 @@
 namespace pti {
 
 void Session::detect_cuda_devices() {
-    cudaError_t error;
-
     int num_cuda_devices = 0;
-    error = cudaGetDeviceCount(&num_cuda_devices);
-    ptiCheckCUDAError(error);
+    cudaGetDeviceCount(&num_cuda_devices);
 
     for(int i = 0; i < num_cuda_devices; ++i) {
         CudaMemNode* cuda_mem_node = new CudaMemNode(i);

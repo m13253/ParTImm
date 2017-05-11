@@ -65,7 +65,7 @@ public:
     }
 
     void free(int node) {
-        if(node != last_node) {
+        if(node != last_node && pointers[node]) {
             session.mem_nodes[node]->free(pointers[node]);
             pointers[node] = NULL;
         }
@@ -149,7 +149,7 @@ public:
             sizes[node] = size;
         } else {
             T* new_ptr = reinterpret_cast<T*>(session.mem_nodes[node]->malloc(size * sizeof (T)));
-            session.mem_nodes[node]->memcpy_from(new_ptr, pointers[node], *session.mem_nodes[node], size < sizes[node] ? size : sizes[node]);
+            session.mem_nodes[node]->memcpy_from(new_ptr, pointers[node], *session.mem_nodes[node], (size < sizes[node] ? size : sizes[node]) * sizeof (T));
             session.mem_nodes[node]->free(pointers[node]);
             pointers[node] = new_ptr;
             sizes[node] = size;
@@ -160,7 +160,7 @@ public:
     }
 
     void free(int node) {
-        if(node != last_node) {
+        if(node != last_node && pointers[node]) {
             session.mem_nodes[node]->free(pointers[node]);
             pointers[node] = NULL;
             sizes[node] = 0;
@@ -169,9 +169,13 @@ public:
 
     void copy_to(int node) {
         if(node != last_node) {
-            allocate(node, sizes[node]);
-            if(last_node != -1) {
+            if(last_node != -1 && sizes[last_node] != 0) {
+                allocate(node, sizes[last_node]);
                 session.mem_nodes[last_node]->memcpy_to(pointers[node], *session.mem_nodes[node], pointers[last_node], sizes[last_node] * sizeof (T));
+                sizes[node] = sizes[last_node];
+            } else {
+                this->free(node);
+                sizes[node] = 0;
             }
             last_node = node;
         }

@@ -17,7 +17,6 @@
 */
 
 #include <ParTI/sptensor.hpp>
-#include <cstdio>
 #include <cstring>
 #include <memory>
 #include <utility>
@@ -28,11 +27,9 @@ namespace {
 
 int compare_indices(SparseTensor& tsr, size_t i, size_t j) {
     for(size_t m = 0; m < tsr.sparse_order.size(); ++m) {
-        std::fprintf(stderr, "Compare m:[%zu](?) i:[%zu](?) j:[%zu](?)", m, i, j);
         size_t mode = tsr.sparse_order.get(0)[m];
         size_t idx_i = tsr.indices[mode].get(0)[i];
         size_t idx_j = tsr.indices[mode].get(0)[j];
-        std::fprintf(stderr, "\rCompare m:[%zu](%zu) i:[%zu](%zu) j:[%zu](%zu)\n", m, mode, i, idx_i, j, idx_j);
         if(idx_i < idx_j) {
             return -1;
         } else if(idx_i > idx_j) {
