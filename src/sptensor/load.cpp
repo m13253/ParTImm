@@ -49,6 +49,8 @@ SparseTensor SparseTensor::load(std::FILE* fp, size_t start_index) {
         tensor.append(coordinate.get(), value);
     }
 
+    tensor.sort_index();
+
     return tensor;
 }
 

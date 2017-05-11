@@ -19,6 +19,8 @@
 #include <ParTI/sptensor.hpp>
 #include <cstring>
 #include <memory>
+#include <utility>
+#include <cstdio>
 
 namespace pti {
 
@@ -26,9 +28,11 @@ namespace {
 
 int compare_indices(SparseTensor& tsr, size_t i, size_t j) {
     for(size_t m = 0; m < tsr.sparse_order.size(); ++m) {
+        std::fprintf(stderr, "Compare m:[%zu](?) i:[%zu](?) j:[%zu](?)", m, i, j);
         size_t mode = tsr.sparse_order.get(0)[m];
         size_t idx_i = tsr.indices[mode].get(0)[i];
         size_t idx_j = tsr.indices[mode].get(0)[j];
+        std::fprintf(stderr, "\rCompare m:[%zu](%zu) i:[%zu](%zu) j:[%zu](%zu)\n", m, mode, i, idx_i, j, idx_j);
         if(idx_i < idx_j) {
             return -1;
         } else if(idx_i > idx_j) {
@@ -39,9 +43,16 @@ int compare_indices(SparseTensor& tsr, size_t i, size_t j) {
 }
 
 void swap_values(SparseTensor& tsr, size_t i, size_t j, Scalar* swap_buffer) {
-    std::memcpy(swap_buffer, &tsr.values.get(0)[i * tsr.chunk_size], tsr.chunk_size * sizeof (Scalar));
-    std::memcpy(&tsr.values.get(0)[i * tsr.chunk_size], &tsr.values.get(0)[j * tsr.chunk_size], tsr.chunk_size * sizeof (Scalar));
-    std::memcpy(&tsr.values.get(0)[i * tsr.chunk_size], swap_buffer, tsr.chunk_size * sizeof (Scalar));
+    for(size_t m = 0; m < tsr.nmodes; ++m) {
+        if(!tsr.is_dense.get(0)[m]) {
+            std::swap(tsr.indices[m].get(0)[i], tsr.indices[m].get(0)[j]);
+        }
+    }
+    Scalar* value_i = &tsr.values.get(0)[i * tsr.chunk_size];
+    Scalar* value_j = &tsr.values.get(0)[j * tsr.chunk_size];
+    std::memcpy(swap_buffer, value_i,     tsr.chunk_size * sizeof (Scalar));
+    std::memcpy(value_i,     value_j,     tsr.chunk_size * sizeof (Scalar));
+    std::memcpy(value_j,     swap_buffer, tsr.chunk_size * sizeof (Scalar));
 }
 
 void quick_sort_index(SparseTensor& tsr, size_t l, size_t r, Scalar* swap_buffer) {
@@ -80,9 +91,9 @@ void SparseTensor::sort_index() {
 void SparseTensor::sort_index(size_t const sparse_order[]) {
     std::memcpy(this->sparse_order.get(0), sparse_order, this->sparse_order.size() * sizeof (size_t));
 
-    std::unique_ptr<Scalar[]> swap_buffer(new Scalar [this->chunk_size]);
+    std::unique_ptr<Scalar[]> swap_buffer(new Scalar [chunk_size]);
 
-    quick_sort_index(*this, 0, this->num_chunks, swap_buffer.get());
+    quick_sort_index(*this, 0, num_chunks, swap_buffer.get());
 }
 
 }
