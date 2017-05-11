@@ -21,6 +21,7 @@
 
 #include <cstddef>
 #include <cstdio>
+#include <string>
 #include <ParTI/base_tensor.hpp>
 #include <ParTI/scalar.hpp>
 #include <ParTI/memblock.hpp>
@@ -56,6 +57,8 @@ public:
     void dump(std::FILE* fp, size_t start_index = 0);
 
     static SparseTensor load(std::FILE* fp, size_t start_index = 0);
+
+    std::string to_string(bool sparse_format, size_t limit = 0);
 
     void append(size_t const coord[], Scalar value);
 

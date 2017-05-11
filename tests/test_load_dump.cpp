@@ -30,6 +30,8 @@ int main(int argc, char const* argv[]) {
     pti::SparseTensor tsr = pti::SparseTensor::load(fi, 1);
     std::fclose(fi);
 
+    std::printf("tsr = %s\n", tsr.to_string(true, 10).c_str());
+
     std::FILE* fo = std::fopen(argv[2], "w");
     tsr.dump(fo, 1);
     std::fclose(fo);

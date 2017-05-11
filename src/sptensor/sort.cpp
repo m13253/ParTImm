@@ -85,7 +85,9 @@ void quick_sort_index(SparseTensor& tsr, size_t l, size_t r, Scalar* swap_buffer
 }
 
 void SparseTensor::sort_index() {
-    return sort_index(this->sparse_order.get(0));
+    std::unique_ptr<Scalar[]> swap_buffer(new Scalar [chunk_size]);
+
+    quick_sort_index(*this, 0, num_chunks, swap_buffer.get());
 }
 
 void SparseTensor::sort_index(size_t const sparse_order[]) {
