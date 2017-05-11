@@ -39,6 +39,10 @@ Session::~Session() {
 
 void Session::detect_devices() {
     unsigned num_cpu_cores = std::thread::hardware_concurrency();
+    if(num_cpu_cores == 0) {
+        std::fprintf(stderr, "Warning: can not detect the number of CPU cores\n");
+        num_cpu_cores = 1;
+    }
     CpuMemNode* cpu_mem_node = new CpuMemNode;
     int cpu_mem_node_id = add_mem_node(cpu_mem_node);
     for(unsigned i = 0; i < num_cpu_cores; ++i) {

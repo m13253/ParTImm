@@ -84,7 +84,7 @@ double Timer::elapsed_time() const {
 
 double Timer::print_elapsed_time(char const* name) const {
     double elapsed_time = this->elapsed_time();
-    fprintf(stdout, "[%s]: %.9lf s\n", name, elapsed_time);
+    fprintf(stdout, "[%s]: %.9lf s spent on device \"%s\"\n", name, elapsed_time, session.devices[this->device]->name.c_str());
     return elapsed_time;
 }
 

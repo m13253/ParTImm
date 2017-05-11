@@ -17,6 +17,7 @@
 */
 
 #include <ParTI/session.hpp>
+#include <cstdio>
 #include <ParTI/device.hpp>
 #include <ParTI/error.hpp>
 #include <ParTI/memnode.hpp>
@@ -24,8 +25,12 @@
 namespace pti {
 
 void Session::detect_cuda_devices() {
+    cudaError_t error;
     int num_cuda_devices = 0;
-    cudaGetDeviceCount(&num_cuda_devices);
+    error = cudaGetDeviceCount(&num_cuda_devices);
+    if(error) {
+        std::fprintf(stderr, "Warning: can not detect CUDA devices\n");
+    }
 
     for(int i = 0; i < num_cuda_devices; ++i) {
         CudaMemNode* cuda_mem_node = new CudaMemNode(i);
@@ -34,7 +39,5 @@ void Session::detect_cuda_devices() {
         add_device(cuda_device);
     }
 }
-
-Session sess;
 
 }
