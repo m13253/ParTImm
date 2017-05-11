@@ -31,7 +31,8 @@ struct Device {
     std::string name;
     int mem_node;
 
-    virtual ~Device();
+    virtual ~Device() {
+    }
 
 };
 

@@ -17,23 +17,32 @@
 */
 
 #include <cstdio>
-#include <ParTI/session.hpp>
+#include <ParTI/error.hpp>
 #include <ParTI/sptensor.hpp>
 
 int main(int argc, char const* argv[]) {
-    if(argc != 3) {
-        std::fprintf(stderr, "Usage: %s input_tensor output_tensor\n\n", argv[0]);
+    if(argc != 2 && argc != 3) {
+        std::fprintf(stderr, "Usage: %s input_tensor [output_tensor]\n\n", argv[0]);
         return 1;
     }
 
+    int io_result;
+
     std::FILE* fi = std::fopen(argv[1], "r");
+    ptiCheckOSError(!fi);
     pti::SparseTensor tsr = pti::SparseTensor::load(fi, 1);
-    std::fclose(fi);
+    io_result = std::fclose(fi);
+    ptiCheckOSError(io_result != 0);
 
     std::printf("tsr = %s\n", tsr.to_string(true, 10).c_str());
 
-    std::FILE* fo = std::fopen(argv[2], "w");
-    tsr.dump(fo, 1);
-    std::fclose(fo);
+    if(argc == 3) {
+        std::FILE* fo = std::fopen(argv[2], "w");
+        ptiCheckOSError(!fo);
+        tsr.dump(fo, 1);
+        io_result = std::fclose(fo);
+        ptiCheckOSError(io_result != 0);
+    }
+
     return 0;
 }

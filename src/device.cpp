@@ -21,9 +21,6 @@
 
 namespace pti {
 
-Device::~Device() {
-}
-
 CpuDevice::CpuDevice(int cpu_core, int mem_node) {
     this->name = "CPU: Core ";
     this->name += std::to_string(cpu_core);
