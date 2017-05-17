@@ -16,11 +16,12 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <ParTI/sptensor.hpp>
+#include <ParTI/algorithm.hpp>
 #include <cassert>
 #include <memory>
 #include <vector>
 #include <ParTI/error.hpp>
+#include <ParTI/sptensor.hpp>
 
 namespace pti {
 
@@ -28,9 +29,9 @@ namespace {
 
 int compare_indices(SparseTensor& tsr, size_t i, size_t j) {
     for(size_t m = 0; m < tsr.sparse_order.size(); ++m) {
-        size_t mode = tsr.sparse_order.get(0)[m];
-        size_t idx_i = tsr.indices[mode].get(0)[i];
-        size_t idx_j = tsr.indices[mode].get(0)[j];
+        size_t mode = tsr.sparse_order(0)[m];
+        size_t idx_i = tsr.indices[mode](0)[i];
+        size_t idx_j = tsr.indices[mode](0)[j];
         if(idx_i < idx_j) {
             return -1;
         } else if(idx_i > idx_j) {
@@ -42,14 +43,14 @@ int compare_indices(SparseTensor& tsr, size_t i, size_t j) {
 
 }
 
-void set_indices(SparseTensor& dest, std::vector<size_t>& fiber_idx, SparseTensor& ref) {
+void set_semisparse_indices_by_sparse_ref(SparseTensor& dest, std::vector<size_t>& fiber_idx, SparseTensor& ref) {
     size_t lastidx = ref.num_chunks;
     assert(dest.nmodes == ref.nmodes);
 
     std::unique_ptr<size_t[]> sort_order(new size_t [ref.nmodes]);
-    sort_order[0] = dest.dense_order.get(0)[0];
-    for(size_t m = 1; m < ref.nmodes; ++m) {
-        if(m < dest.dense_order.get(0)[0]) {
+    sort_order[ref.nmodes - 1] = dest.dense_order(0)[0];
+    for(size_t m = 1; m < ref.nmodes - 1; ++m) {
+        if(m < dest.dense_order(0)[0]) {
             sort_order[m] = m;
         } else {
             sort_order[m] = m + 1;

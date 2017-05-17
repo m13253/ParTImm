@@ -25,11 +25,11 @@ namespace pti {
 
 std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
     std::string result = "pti::SparseTensor(\n  shape = [";
-    result += array_to_string(shape.get(0), nmodes);
+    result += array_to_string(shape(0), nmodes);
     result += "],\n  dense_order = [";
-    result += array_to_string(dense_order.get(0), dense_order.size());
+    result += array_to_string(dense_order(0), dense_order.size());
     result += "], sparse_order = [";
-    result += array_to_string(sparse_order.get(0), sparse_order.size());
+    result += array_to_string(sparse_order(0), sparse_order.size());
     result += "],\n  values[";
     result += std::to_string(num_chunks);
     result += 'x';
@@ -49,10 +49,10 @@ std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
                 if(m != 0) {
                     result += ", ";
                 }
-                if(is_dense.get(0)[m]) {
+                if(is_dense(0)[m]) {
                     result += ':';
                 } else {
-                    result += std::to_string(indices[m].get(0)[i]);
+                    result += std::to_string(indices[m](0)[i]);
                 }
             }
             result += "): [";
@@ -64,7 +64,7 @@ std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
                 if(j != 0) {
                     result += ", ";
                 }
-                result += std::to_string(values.get(0)[i * chunk_size + j]);
+                result += std::to_string(values(0)[i * chunk_size + j]);
             }
             result += ']';
         }

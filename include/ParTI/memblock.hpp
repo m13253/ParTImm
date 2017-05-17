@@ -81,12 +81,12 @@ public:
         }
     }
 
-    T* get(int node) {
+    T* operator() (int node) {
         copy_to(node);
         return pointers[node];
     }
 
-    T* fget(int node) const {
+    T* ptr(int node) const {
         return pointers[node];
     }
 
@@ -181,12 +181,12 @@ public:
         }
     }
 
-    T* get(int node) {
+    T* operator() (int node) {
         copy_to(node);
         return pointers[node];
     }
 
-    T* fget(int node) const {
+    T* ptr(int node) const {
         return pointers[node];
     }
 
@@ -197,6 +197,7 @@ public:
     void mark_dirty(int node) {
         last_node = node;
     }
+
 
 };
 

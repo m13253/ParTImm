@@ -44,9 +44,9 @@ void SparseTensor::append(size_t const coord[], Scalar value) {
     if(chunk_size == 1) { // Fast code path fore pure sparse tensor
         size_t next_offset = num_chunks;
         for(size_t m = 0; m < nmodes; ++m) {
-            indices[m].get(0)[next_offset] = coord[m];
+            indices[m](0)[next_offset] = coord[m];
         }
-        values.get(0)[next_offset] = value;
+        values(0)[next_offset] = value;
         ++num_chunks;
     } else {
         throw std::logic_error("Unimplemented");

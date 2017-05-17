@@ -23,16 +23,16 @@
 namespace pti {
 
 void SparseTensor::offset_to_indices(size_t indices[], size_t offset) {
-    bool* is_dense = this->is_dense.get(0);
+    bool* is_dense = this->is_dense(0);
     for(size_t m = 0; m < nmodes; ++m) {
         if(!is_dense[m]) {
-            indices[m] = this->indices[m].get(0)[offset / chunk_size];
+            indices[m] = this->indices[m](0)[offset / chunk_size];
         }
     }
     if(chunk_size != 1) { // Semi sparse tensor
         size_t intra_chunk = offset % chunk_size;
-        size_t* dense_order = this->dense_order.get(0);
-        size_t* strides = this->strides.get(0);
+        size_t* dense_order = this->dense_order(0);
+        size_t* strides = this->strides(0);
         for(size_t o = this->dense_order.size()-1; o != 0; --o) {
             size_t m = dense_order[o];
             indices[m] = intra_chunk % strides[m];

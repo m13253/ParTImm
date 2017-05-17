@@ -30,7 +30,7 @@ void SparseTensor::dump(std::FILE* fp, size_t start_index) {
     io_result = std::fprintf(fp, "%zu\n", nmodes);
     ptiCheckOSError(io_result < 0);
 
-    io_result = std::fprintf(fp, "%s\n", array_to_string(shape.get(0), shape.size(), "\t").c_str());
+    io_result = std::fprintf(fp, "%s\n", array_to_string(shape(0), shape.size(), "\t").c_str());
     ptiCheckOSError(io_result < 0);
 
     std::unique_ptr<size_t[]> coordinate(new size_t [nmodes]);
@@ -38,7 +38,7 @@ void SparseTensor::dump(std::FILE* fp, size_t start_index) {
         offset_to_indices(coordinate.get(), i);
         bool out_of_range = false;
         for(size_t m = 0; m < nmodes; ++m) {
-            if(coordinate[m] > shape.get(0)[m]) {
+            if(coordinate[m] > shape(0)[m]) {
                 out_of_range = true;
                 break;
             }
@@ -47,7 +47,7 @@ void SparseTensor::dump(std::FILE* fp, size_t start_index) {
         if(!out_of_range) {
             io_result = std::fprintf(fp, "%s\t%.16lg\n",
                 array_to_string(coordinate.get(), nmodes, "\t").c_str(),
-                (double) values.get(0)[i]);
+                (double) values(0)[i]);
             ptiCheckOSError(io_result < 0);
         }
     }
