@@ -28,12 +28,12 @@ SparseTensor::SparseTensor(size_t nmodes, size_t const shape[], bool const is_de
     this->nmodes = nmodes;
 
     // shape
-    this->shape.allocate(0, nmodes);
-    std::memcpy(this->shape(0), shape, nmodes * sizeof (size_t));
+    this->shape.allocate(cpu, nmodes);
+    std::memcpy(this->shape(cpu), shape, nmodes * sizeof (size_t));
 
     // is_dense
-    this->is_dense.allocate(0, nmodes);
-    std::memcpy(this->is_dense(0), is_dense, nmodes * sizeof (bool));
+    this->is_dense.allocate(cpu, nmodes);
+    std::memcpy(this->is_dense(cpu), is_dense, nmodes * sizeof (bool));
 
     size_t dense_modes = 0;
     for(size_t m = 0; m < nmodes; ++m) {
@@ -43,8 +43,8 @@ SparseTensor::SparseTensor(size_t nmodes, size_t const shape[], bool const is_de
     }
 
     // dense_order
-    this->dense_order.allocate(0, dense_modes);
-    size_t* dense_order = this->dense_order(0);
+    this->dense_order.allocate(cpu, dense_modes);
+    size_t* dense_order = this->dense_order(cpu);
     size_t order_idx = 0;
     for(size_t m = 0; m < nmodes; ++m) {
         if(is_dense[m]) {
@@ -53,8 +53,8 @@ SparseTensor::SparseTensor(size_t nmodes, size_t const shape[], bool const is_de
     }
 
     // sparse_order
-    this->sparse_order.allocate(0, nmodes - dense_modes);
-    size_t* sparse_order = this->sparse_order(0);
+    this->sparse_order.allocate(cpu, nmodes - dense_modes);
+    size_t* sparse_order = this->sparse_order(cpu);
     order_idx = 0;
     for(size_t m = 0; m < nmodes; ++m) {
         if(!is_dense[m]) {
@@ -63,8 +63,8 @@ SparseTensor::SparseTensor(size_t nmodes, size_t const shape[], bool const is_de
     }
 
     // strides
-    this->strides.allocate(0, nmodes);
-    size_t* strides = this->strides(0);
+    this->strides.allocate(cpu, nmodes);
+    size_t* strides = this->strides(cpu);
     for(size_t m = 0; m < nmodes; ++m) {
         if(is_dense[m]) {
             strides[m] = ceil_div<size_t>(shape[m], 8) * 8;

@@ -24,7 +24,7 @@ namespace pti {
 
 void SparseTensor::append(size_t const coord[], Scalar value) {
     for(size_t m = 0; m < nmodes; ++m) {
-        indices[m].copy_to(0);
+        indices[m].copy_to(cpu);
         if(indices[m].size() == num_chunks) { // Need reallocation
             size_t new_size = indices[m].size() >= 8 ?
                 indices[m].size() + indices[m].size() / 2 :
@@ -33,7 +33,7 @@ void SparseTensor::append(size_t const coord[], Scalar value) {
         }
     }
 
-    values.copy_to(0);
+    values.copy_to(cpu);
     if(values.size() == num_chunks * chunk_size) { // Need reallocation
         size_t new_size = values.size() >= 8 ?
             values.size() + values.size() / 2 :
@@ -44,9 +44,9 @@ void SparseTensor::append(size_t const coord[], Scalar value) {
     if(chunk_size == 1) { // Fast code path fore pure sparse tensor
         size_t next_offset = num_chunks;
         for(size_t m = 0; m < nmodes; ++m) {
-            indices[m](0)[next_offset] = coord[m];
+            indices[m](cpu)[next_offset] = coord[m];
         }
-        values(0)[next_offset] = value;
+        values(cpu)[next_offset] = value;
         ++num_chunks;
     } else {
         throw std::logic_error("Unimplemented");

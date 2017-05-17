@@ -49,6 +49,8 @@ private:
 
 extern Session session;
 
+static const int cpu = 0;
+
 }
 
 #endif
