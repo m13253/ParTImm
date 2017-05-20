@@ -40,10 +40,12 @@ static auto strtonum(Fn fn, const char *str, Args &&...args) -> decltype(fn(str,
 static std::vector<std::string> split_array(char const* s) {
     std::vector<std::string> result;
     size_t last_pos = 0;
-    while(char const* c = std::strchr(s, ',')) {
+    while(char const* c = std::strchr(s + last_pos, ',')) {
         size_t next_pos = c - s;
         result.push_back(std::string(s, last_pos, next_pos - last_pos));
+        last_pos = next_pos;
     }
+    result.push_back(std::string(s, last_pos));
     return result;
 }
 

@@ -21,6 +21,7 @@
 #include <ParTI/argparse.hpp>
 #include <ParTI/error.hpp>
 #include <ParTI/timer.hpp>
+#include <ParTI/session.hpp>
 #include <ParTI/sptensor.hpp>
 
 using namespace pti;
@@ -41,12 +42,15 @@ int main(int argc, char const* argv[]) {
     std::vector<char const*> args = parse_args(argc, argv, defs);
 
     if(args.size() != 2 && args.size() != 3) {
-        std::fprintf(stderr, "Usage: %s [OPTIONS] X U [Y]\n\n", argv[0]);
-        std::fprintf(stderr, "Options:\n");
-        std::fprintf(stderr, "-d, --dense-format\tPrint tensor in dense format instead of sparse format.\n\n");
-        std::fprintf(stderr, "-l, --limit\tLimit the number of elements to print [Default: 10].\n\n");
+        std::printf("Usage: %s [OPTIONS] X U [Y]\n\n", argv[0]);
+        std::printf("Options:\n");
+        std::printf("\t-d, --dense-format\tPrint tensor in dense format instead of sparse format.\n");
+        std::printf("\t-l, --limit\t\tLimit the number of elements to print [Default: 10].\n");
+        std::printf("\n");
         return 1;
     }
+
+    session.print_devices();
 
     int io_result;
 
