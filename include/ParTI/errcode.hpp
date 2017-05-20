@@ -21,7 +21,7 @@
 
 namespace pti {
 
-enum errcode {
+enum ErrCode {
     ERR_NO_ERROR       = 0,
     ERR_UNKNOWN        = 1,
     ERR_SHAPE_MISMATCH = 2,

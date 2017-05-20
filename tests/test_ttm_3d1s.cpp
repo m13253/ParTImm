@@ -17,16 +17,21 @@
 */
 
 #include <cstdio>
+#include <ParTI/algorithm.hpp>
 #include <ParTI/argparse.hpp>
 #include <ParTI/error.hpp>
+#include <ParTI/timer.hpp>
 #include <ParTI/sptensor.hpp>
 
 using namespace pti;
 
 int main(int argc, char const* argv[]) {
+    size_t mode = 0;
     bool dense_format = false;
     size_t limit = 10;
     ParamDefinition defs[] = {
+        { "-m",             PARAM_SIZET, { &mode } },
+        { "--mode",         PARAM_SIZET, { &mode } },
         { "-d",             PARAM_BOOL,  { &dense_format } },
         { "--dense-format", PARAM_BOOL,  { &dense_format } },
         { "-l",             PARAM_SIZET, { &limit } },
@@ -35,8 +40,8 @@ int main(int argc, char const* argv[]) {
     };
     std::vector<char const*> args = parse_args(argc, argv, defs);
 
-    if(args.size() != 1 && args.size() != 2) {
-        std::fprintf(stderr, "Usage: %s [OPTIONS] input_tensor [output_tensor]\n\n", argv[0]);
+    if(args.size() != 2 && args.size() != 3) {
+        std::fprintf(stderr, "Usage: %s [OPTIONS] X U [Y]\n\n", argv[0]);
         std::fprintf(stderr, "Options:\n");
         std::fprintf(stderr, "-d, --dense-format\tPrint tensor in dense format instead of sparse format.\n\n");
         std::fprintf(stderr, "-l, --limit\tLimit the number of elements to print [Default: 10].\n\n");
@@ -45,19 +50,31 @@ int main(int argc, char const* argv[]) {
 
     int io_result;
 
-    std::FILE* fi = std::fopen(args[0], "r");
-    ptiCheckOSError(!fi);
-    SparseTensor tsr = SparseTensor::load(fi, 1);
-    io_result = std::fclose(fi);
+    std::FILE* fX = std::fopen(args[0], "r");
+    ptiCheckOSError(!fX);
+    SparseTensor X = SparseTensor::load(fX, 1);
+    io_result = std::fclose(fX);
     ptiCheckOSError(io_result != 0);
 
-    std::printf("tsr = %s\n", tsr.to_string(!dense_format, limit).c_str());
+    std::FILE* fU = std::fopen(args[1], "r");
+    ptiCheckOSError(!fU);
+    SparseTensor U = SparseTensor::load(fU, 1).to_fully_dense();
+    io_result = std::fclose(fU);
+    ptiCheckOSError(io_result != 0);
 
-    if(args.size() == 2) {
-        std::FILE* fo = std::fopen(args[0], "w");
-        ptiCheckOSError(!fo);
-        tsr.dump(fo, 1);
-        io_result = std::fclose(fo);
+    Timer timer(cpu);
+    timer.start();
+    SparseTensor Y = tensor_times_matrix(X, U, mode);
+    timer.stop();
+
+    std::printf("Y = %s\n", Y.to_string(!dense_format, limit).c_str());
+    timer.print_elapsed_time("TTM (CPU, 3d1s)");
+
+    if(args.size() == 3) {
+        std::FILE* fY = std::fopen(args[2], "w");
+        ptiCheckOSError(!fY);
+        Y.dump(fY, 1);
+        io_result = std::fclose(fY);
         ptiCheckOSError(io_result != 0);
     }
 
