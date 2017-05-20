@@ -36,8 +36,8 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
     ptiCheckError(mode >= nmodes, ERR_SHAPE_MISMATCH, "shape mismatch");
 
     ptiCheckError(U.nmodes != 2, ERR_SHAPE_MISMATCH, "U.nmodes != 2");
-    ptiCheckError(U.dense_order(cpu)[0] == 0, ERR_SHAPE_MISMATCH, "U.dense_order[0] != 0");
-    ptiCheckError(U.dense_order(cpu)[1] == 1, ERR_SHAPE_MISMATCH, "U.dense_order[1] != 1");
+    ptiCheckError(U.dense_order(cpu)[0] != 0, ERR_SHAPE_MISMATCH, "U.dense_order[0] != 0");
+    ptiCheckError(U.dense_order(cpu)[1] != 1, ERR_SHAPE_MISMATCH, "U.dense_order[1] != 1");
     ptiCheckError(X.shape(cpu)[mode] != nrows, ERR_SHAPE_MISMATCH, "X.shape[mode] != U.nrows");
 
     std::unique_ptr<size_t[]> sort_order(new size_t [nmodes]);
