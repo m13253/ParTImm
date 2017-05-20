@@ -18,6 +18,8 @@
 
 #include <ParTI/sptensor.hpp>
 #include <algorithm>
+#include <cstring>
+#include <memory>
 #include <string>
 #include <ParTI/utils.hpp>
 
@@ -68,9 +70,86 @@ std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
             }
             result += ']';
         }
+        if(num_chunks != 0) {
+            result += '\n';
+        }
+    } else if(nmodes != 0) {
+        std::unique_ptr<size_t[]> mode_order(new size_t [nmodes]);
+        std::memcpy(mode_order.get(), sparse_order(cpu), sparse_order.size() * sizeof (size_t));
+        std::memcpy(mode_order.get() + sparse_order.size(), dense_order(cpu), dense_order.size() * sizeof (size_t));
+
+        size_t nonzero_modes = 0;
+        for(size_t m = 0; m < nmodes; ++m) {
+            if(shape(cpu)[mode_order[m]] != 0) {
+                ++nonzero_modes;
+            } else {
+                break;
+            }
+        }
+        if(nonzero_modes != nmodes) {
+            ++nonzero_modes;
+        }
+        size_t last_mode = mode_order[nonzero_modes - 1];
+
+        std::unique_ptr<size_t[]> coord(new size_t [nmodes] ());
+        std::unique_ptr<size_t[]> next_coord(new size_t [nmodes]);
+        size_t level = 0;
+
+        std::fprintf(stderr, "Target (%s)\n", array_to_string(next_coord.get(), nmodes).c_str());
+        for(size_t i = 0; i <= num_chunks * chunk_size;) {
+            if(level != nonzero_modes) {
+                if(level != 0) {
+                    result += ",\n";
+                }
+                for(size_t m = 0; m < level + 4; ++m) {
+                    result += ' ';
+                }
+                for(size_t m = level; m < nonzero_modes; ++m) {
+                    result += '[';
+                }
+                level = nonzero_modes;
+                std::fprintf(stderr, "level = %zu\n", level);
+            } else {
+                result += ", ";
+            }
+            offset_to_indices(next_coord.get(), i);
+            bool match_next = std::memcmp(coord.get(), next_coord.get(), nmodes * sizeof (size_t)) == 0;
+            if(coord[last_mode] < shape(cpu)[last_mode]) {
+                if(match_next) {
+                    result += std::to_string(values(cpu)[i]);
+                } else {
+                    result += "0";
+                }
+                ++coord[last_mode];
+            }
+            for(size_t m = 0; m + 1 < nonzero_modes; m++) {
+                std::fprintf(stderr, "Current (%s)\n", array_to_string(coord.get(), nmodes).c_str());
+                size_t mode = mode_order[nonzero_modes - m - 1];
+                if(limit != 0 && coord[mode] >= limit) {
+                    result += ", ...";
+                } else if(coord[mode] < shape(cpu)[mode]) {
+                    break;
+                }
+                --level;
+                std::fprintf(stderr, "--level = %zu\n", level);
+                coord[mode] = 0;
+                ++coord[mode_order[nonzero_modes - m - 2]];
+                result += ']';
+            }
+            if(limit != 0 && coord[mode_order[0]] >= limit) {
+                result += ", ...";
+                break;
+            } else if(coord[mode_order[0]] == shape(cpu)[mode_order[0]]) {
+                break;
+            }
+            if(match_next) {
+                ++i;
+            }
+        }
+        for(size_t m = 0; m < level; ++m) {
+            result += ']';
+        }
         result += '\n';
-    } else {
-        throw std::logic_error("Unimplemented");
     }
     result += "  }\n)";
     return result;

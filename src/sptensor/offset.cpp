@@ -23,6 +23,10 @@
 namespace pti {
 
 void SparseTensor::offset_to_indices(size_t indices[], size_t offset) {
+    if(offset >= num_chunks * chunk_size) {
+        std::memcpy(indices, this->shape(cpu), nmodes * sizeof (size_t));
+        return;
+    }
     bool* is_dense = this->is_dense(cpu);
     for(size_t m = 0; m < nmodes; ++m) {
         if(!is_dense[m]) {
