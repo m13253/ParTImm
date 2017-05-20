@@ -64,7 +64,7 @@ void set_semisparse_indices_by_sparse_ref(SparseTensor& dest, std::vector<size_t
     for(size_t i = 0; i < ref.num_chunks; ++i) {
         if(lastidx == ref.num_chunks || compare_indices(ref, lastidx, i) != 0) {
             ref.offset_to_indices(indices.get(), i * ref.chunk_size);
-            dest.append(indices.get(), 0);
+            dest.append(indices.get(), 0.);
         }
         lastidx = i;
         fiber_idx.push_back(i);

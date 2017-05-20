@@ -17,40 +17,49 @@
 */
 
 #include <ParTI/sptensor.hpp>
+#include <cstring>
 #include <memory>
+#include <ParTI/error.hpp>
+#include <ParTI/errcode.hpp>
 #include <ParTI/utils.hpp>
 
 namespace pti {
 
-void SparseTensor::append(size_t const coord[], Scalar value) {
+void SparseTensor::append(size_t const coord[], Scalar const value[]) {
     for(size_t m = 0; m < nmodes; ++m) {
         indices[m].copy_to(cpu);
-        if(indices[m].size() == num_chunks) { // Need reallocation
+        if(indices[m].size() <= num_chunks) { // Need reallocation
             size_t new_size = indices[m].size() >= 8 ?
                 indices[m].size() + indices[m].size() / 2 :
                 8;
-            indices[m].resize(0, new_size);
+            indices[m].resize(cpu, new_size);
         }
     }
 
     values.copy_to(cpu);
-    if(values.size() == num_chunks * chunk_size) { // Need reallocation
+    if(values.size() <= num_chunks * chunk_size) { // Need reallocation
         size_t new_size = values.size() >= 8 ?
             values.size() + values.size() / 2 :
             8;
-        values.resize(0, new_size);
+        if(new_size < (num_chunks + 1) * chunk_size) {
+            new_size = (num_chunks + 1) * chunk_size;
+        }
+        values.resize(cpu, new_size);
     }
 
-    if(chunk_size == 1) { // Fast code path fore pure sparse tensor
-        size_t next_offset = num_chunks;
-        for(size_t m = 0; m < nmodes; ++m) {
+    size_t next_offset = num_chunks;
+    for(size_t m = 0; m < nmodes; ++m) {
+        if(!is_dense(cpu)[m]) {
             indices[m](cpu)[next_offset] = coord[m];
         }
-        values(cpu)[next_offset] = value;
-        ++num_chunks;
-    } else {
-        throw std::logic_error("Unimplemented");
     }
+    std::memcpy(&values(cpu)[next_offset * chunk_size], value, chunk_size * sizeof (Scalar));
+    ++num_chunks;
+}
+
+void SparseTensor::append(size_t const coord[], Scalar value) {
+    ptiCheckError(chunk_size != 1, ERR_SHAPE_MISMATCH, "tensor is not fully sparse");
+    return append(coord, &value);
 }
 
 }

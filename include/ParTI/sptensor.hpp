@@ -48,7 +48,7 @@ struct SparseTensor : public BaseTensor {
 
 public:
 
-    SparseTensor(size_t nmodes, size_t const shape[], bool const mode_is_sparse[]);
+    SparseTensor(size_t nmodes, size_t const shape[], bool const is_dense[]);
 
     ~SparseTensor();
 
@@ -60,10 +60,15 @@ public:
 
     std::string to_string(bool sparse_format, size_t limit = 0);
 
+    void append(size_t const coord[], Scalar const value[]);
     void append(size_t const coord[], Scalar value);
+    size_t reserve(size_t size);
 
     void sort_index();
     void sort_index(size_t const sparse_order[]);
+
+    SparseTensor to_fully_sparse();
+    SparseTensor to_fully_dense();
 
 };
 
