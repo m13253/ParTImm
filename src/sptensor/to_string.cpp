@@ -95,7 +95,6 @@ std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
         std::unique_ptr<size_t[]> next_coord(new size_t [nmodes]);
         size_t level = 0;
 
-        std::fprintf(stderr, "Target (%s)\n", array_to_string(next_coord.get(), nmodes).c_str());
         for(size_t i = 0; i <= num_chunks * chunk_size;) {
             if(level != nonzero_modes) {
                 if(level != 0) {
@@ -108,7 +107,6 @@ std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
                     result += '[';
                 }
                 level = nonzero_modes;
-                std::fprintf(stderr, "level = %zu\n", level);
             } else {
                 result += ", ";
             }
@@ -123,7 +121,6 @@ std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
                 ++coord[last_mode];
             }
             for(size_t m = 0; m + 1 < nonzero_modes; m++) {
-                std::fprintf(stderr, "Current (%s)\n", array_to_string(coord.get(), nmodes).c_str());
                 size_t mode = mode_order[nonzero_modes - m - 1];
                 if(limit != 0 && coord[mode] >= limit) {
                     result += ", ...";
@@ -131,7 +128,6 @@ std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
                     break;
                 }
                 --level;
-                std::fprintf(stderr, "--level = %zu\n", level);
                 coord[mode] = 0;
                 ++coord[mode_order[nonzero_modes - m - 2]];
                 result += ']';
