@@ -42,7 +42,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
 
     std::unique_ptr<size_t[]> sort_order(new size_t [nmodes]);
     sort_order[nmodes - 1] = mode;
-    for(size_t m = 1; m < nmodes - 1; ++m) {
+    for(size_t m = 0; m < nmodes - 1; ++m) {
         if(m < mode) {
             sort_order[m] = m;
         } else {

@@ -49,7 +49,7 @@ void set_semisparse_indices_by_sparse_ref(SparseTensor& dest, std::vector<size_t
 
     std::unique_ptr<size_t[]> sort_order(new size_t [ref.nmodes]);
     sort_order[ref.nmodes - 1] = dest.dense_order(cpu)[0];
-    for(size_t m = 1; m < ref.nmodes - 1; ++m) {
+    for(size_t m = 0; m < ref.nmodes - 1; ++m) {
         if(m < dest.dense_order(cpu)[0]) {
             sort_order[m] = m;
         } else {
@@ -61,10 +61,11 @@ void set_semisparse_indices_by_sparse_ref(SparseTensor& dest, std::vector<size_t
     fiber_idx.clear();
     dest.num_chunks = 0;
     std::unique_ptr<size_t[]> indices(new size_t [ref.nmodes]);
+    std::unique_ptr<Scalar[]> chunk(new Scalar [dest.chunk_size] ());
     for(size_t i = 0; i < ref.num_chunks; ++i) {
         if(lastidx == ref.num_chunks || compare_indices(ref, lastidx, i) != 0) {
             ref.offset_to_indices(indices.get(), i * ref.chunk_size);
-            dest.append(indices.get(), 0.);
+            dest.append(indices.get(), chunk.get());
         }
         lastidx = i;
         fiber_idx.push_back(i);

@@ -44,7 +44,7 @@ SparseTensor SparseTensor::to_fully_dense() {
             if(nmodes != 0) {
                 for(size_t m = 0; m + 1 < nmodes; ++m) {
                     offset += coord[result_dense_order[m]];
-                    offset *= shape(cpu)[result_dense_order[m + 1]];
+                    offset *= strides(cpu)[result_dense_order[m + 1]];
                 }
                 offset += coord[result_dense_order[nmodes - 1]];
             }
