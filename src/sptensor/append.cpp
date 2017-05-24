@@ -59,7 +59,36 @@ void SparseTensor::append(size_t const coord[], Scalar const value[]) {
 
 void SparseTensor::append(size_t const coord[], Scalar value) {
     ptiCheckError(chunk_size != 1, ERR_SHAPE_MISMATCH, "tensor is not fully sparse");
-    return append(coord, &value);
+
+    for(size_t m = 0; m < nmodes; ++m) {
+        indices[m].copy_to(cpu);
+        if(indices[m].size() <= num_chunks) { // Need reallocation
+            size_t new_size = indices[m].size() >= 8 ?
+                indices[m].size() + indices[m].size() / 2 :
+                8;
+            indices[m].resize(cpu, new_size);
+        }
+    }
+
+    values.copy_to(cpu);
+    if(values.size() <= num_chunks * chunk_size) { // Need reallocation
+        size_t new_size = values.size() >= 8 ?
+            values.size() + values.size() / 2 :
+            8;
+        if(new_size < (num_chunks + 1) * chunk_size) {
+            new_size = (num_chunks + 1) * chunk_size;
+        }
+        values.resize(cpu, new_size);
+    }
+
+    size_t next_offset = num_chunks;
+    for(size_t m = 0; m < nmodes; ++m) {
+        if(!is_dense(cpu)[m]) {
+            indices[m](cpu)[next_offset] = coord[m];
+        }
+    }
+    values(cpu)[next_offset * chunk_size] = value;
+    ++num_chunks;
 }
 
 }

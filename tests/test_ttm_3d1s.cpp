@@ -44,6 +44,7 @@ int main(int argc, char const* argv[]) {
     if(args.size() != 2 && args.size() != 3) {
         std::printf("Usage: %s [OPTIONS] X U [Y]\n\n", argv[0]);
         std::printf("Options:\n");
+        std::printf("\t-m, --mode\tUse specific mode for multiplication [Default: 0]\n");
         std::printf("\t-d, --dense-format\tPrint tensor in dense format instead of sparse format.\n");
         std::printf("\t-l, --limit\t\tLimit the number of elements to print [Default: 10].\n");
         std::printf("\n");
