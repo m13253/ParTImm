@@ -28,6 +28,8 @@ namespace pti {
 std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
     std::string result = "pti::SparseTensor(\n  shape = [";
     result += array_to_string(shape(cpu), nmodes);
+    result += "], strides = [";
+    result += array_to_string(strides(cpu), strides.size());
     result += "],\n  dense_order = [";
     result += array_to_string(dense_order(cpu), dense_order.size());
     result += "], sparse_order = [";

@@ -19,6 +19,7 @@
 #include <ParTI/sptensor.hpp>
 #include <cstring>
 #include <memory>
+#include <ParTI/utils.hpp>
 
 namespace pti {
 
@@ -44,13 +45,16 @@ SparseTensor SparseTensor::to_fully_dense() {
             if(nmodes != 0) {
                 for(size_t m = 0; m + 1 < nmodes; ++m) {
                     offset += coord[result_dense_order[m]];
-                    offset *= strides(cpu)[result_dense_order[m + 1]];
+                    offset *= result.strides(cpu)[result_dense_order[m + 1]];
                 }
                 offset += coord[result_dense_order[nmodes - 1]];
             }
+            std::fprintf(stderr, "(%s) => %zu\n", array_to_string(coord.get(), nmodes).c_str(), offset);
             result.values(cpu)[offset] = values(cpu)[j];
         }
     }
+
+    result.num_chunks = 1;
 
     return result;
 }

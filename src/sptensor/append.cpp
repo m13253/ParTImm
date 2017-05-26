@@ -28,16 +28,19 @@ namespace pti {
 void SparseTensor::append(size_t const coord[], Scalar const value[]) {
     for(size_t m = 0; m < nmodes; ++m) {
         indices[m].copy_to(cpu);
-        if(indices[m].size() <= num_chunks) { // Need reallocation
+        if(indices[m].size() < num_chunks + 1) { // Need reallocation
             size_t new_size = indices[m].size() >= 8 ?
                 indices[m].size() + indices[m].size() / 2 :
                 8;
+            if(new_size < num_chunks + 1) {
+                new_size = num_chunks + 1;
+            }
             indices[m].resize(cpu, new_size);
         }
     }
 
     values.copy_to(cpu);
-    if(values.size() <= num_chunks * chunk_size) { // Need reallocation
+    if(values.size() < (num_chunks + 1) * chunk_size) { // Need reallocation
         size_t new_size = values.size() >= 8 ?
             values.size() + values.size() / 2 :
             8;
@@ -62,16 +65,19 @@ void SparseTensor::append(size_t const coord[], Scalar value) {
 
     for(size_t m = 0; m < nmodes; ++m) {
         indices[m].copy_to(cpu);
-        if(indices[m].size() <= num_chunks) { // Need reallocation
+        if(indices[m].size() < num_chunks + 1) { // Need reallocation
             size_t new_size = indices[m].size() >= 8 ?
                 indices[m].size() + indices[m].size() / 2 :
                 8;
+            if(new_size < num_chunks + 1) {
+                new_size = num_chunks + 1;
+            }
             indices[m].resize(cpu, new_size);
         }
     }
 
     values.copy_to(cpu);
-    if(values.size() <= num_chunks * chunk_size) { // Need reallocation
+    if(values.size() < (num_chunks + 1) * chunk_size) { // Need reallocation
         size_t new_size = values.size() >= 8 ?
             values.size() + values.size() / 2 :
             8;

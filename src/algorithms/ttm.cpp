@@ -59,16 +59,12 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
             Y_shape[m] = ncols;
         }
     }
-    std::unique_ptr<bool[]> Y_is_sparse(new bool [nmodes]);
+    std::unique_ptr<bool[]> Y_is_dense(new bool [nmodes]);
     for(size_t m = 0; m < nmodes; ++m) {
-        if(m != mode) {
-            Y_is_sparse[m] = true;
-        } else {
-            Y_is_sparse[m] = false;
-        }
+        Y_is_dense[m] = m == mode;
     }
 
-    SparseTensor Y(nmodes, Y_shape.get(), Y_is_sparse.get());
+    SparseTensor Y(nmodes, Y_shape.get(), Y_is_dense.get());
 
     std::vector<size_t> fiberidx;
     set_semisparse_indices_by_sparse_ref(Y, fiberidx, X);
@@ -76,6 +72,9 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
     Scalar* X_values = X.values(cpu);
     Scalar* Y_values = Y.values(cpu);
     Scalar* U_values = U.values(cpu);
+
+    std::fprintf(stderr, "X = %s\n", X.to_string(true).c_str());
+    std::fprintf(stderr, "U = %s\n", U.to_string(true).c_str());
 
     Timer timer(cpu);
     timer.start();
@@ -86,6 +85,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
         for(size_t j = inz_begin; j < inz_end; ++j) {
             size_t r = X.indices[mode](cpu)[j];
             for(size_t k = 0; k < ncols; ++k) {
+                std::fprintf(stderr, "Y[%zu*%zu + %zu] += X[%zu] * U[%zu*%zu + %zu]\n", i, Y.chunk_size, k, j, r, U.chunk_size, k);
                 Y_values[i * Y.chunk_size + k] += X_values[j] * U_values[r * U.chunk_size + k];
             }
         }
