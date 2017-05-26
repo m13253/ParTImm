@@ -24,6 +24,7 @@
 #include <ParTI/errcode.hpp>
 #include <ParTI/sptensor.hpp>
 #include <ParTI/timer.hpp>
+#include <ParTI/utils.hpp>
 
 namespace pti {
 
@@ -32,6 +33,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
     size_t nmodes = X.nmodes;
     size_t nrows = U.shape(cpu)[0];
     size_t ncols = U.shape(cpu)[1];
+    size_t stride = U.strides(cpu)[1];
 
     ptiCheckError(mode >= nmodes, ERR_SHAPE_MISMATCH, "shape mismatch");
 
@@ -67,7 +69,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
     SparseTensor Y(nmodes, Y_shape.get(), Y_is_dense.get());
 
     std::vector<size_t> fiberidx;
-    set_semisparse_indices_by_sparse_ref(Y, fiberidx, X);
+    set_semisparse_indices_by_sparse_ref(Y, fiberidx, X, mode);
 
     Scalar* X_values = X.values(cpu);
     Scalar* Y_values = Y.values(cpu);
@@ -75,6 +77,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
 
     std::fprintf(stderr, "X = %s\n", X.to_string(true).c_str());
     std::fprintf(stderr, "U = %s\n", U.to_string(true).c_str());
+    std::fprintf(stderr, "fiberidx = %s\n", array_to_string(fiberidx.data(), fiberidx.size()).c_str());
 
     Timer timer(cpu);
     timer.start();
@@ -86,7 +89,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
             size_t r = X.indices[mode](cpu)[j];
             for(size_t k = 0; k < ncols; ++k) {
                 std::fprintf(stderr, "Y[%zu*%zu + %zu] += X[%zu] * U[%zu*%zu + %zu]\n", i, Y.chunk_size, k, j, r, U.chunk_size, k);
-                Y_values[i * Y.chunk_size + k] += X_values[j] * U_values[r * U.chunk_size + k];
+                Y_values[i * Y.chunk_size + k] += X_values[j] * U_values[r * stride + k];
             }
         }
     }

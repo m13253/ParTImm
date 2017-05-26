@@ -27,9 +27,13 @@ namespace pti {
 
 namespace {
 
-int compare_indices(SparseTensor& tsr, size_t i, size_t j) {
+int compare_indices(SparseTensor& tsr, size_t i, size_t j, size_t except) {
+    size_t* sort_order = tsr.sparse_order(cpu);
     for(size_t m = 0; m < tsr.sparse_order.size(); ++m) {
-        size_t mode = tsr.sparse_order(cpu)[m];
+        size_t mode = sort_order[m];
+        if(mode == except) {
+            continue;
+        }
         size_t idx_i = tsr.indices[mode](cpu)[i];
         size_t idx_j = tsr.indices[mode](cpu)[j];
         if(idx_i < idx_j) {
@@ -43,32 +47,21 @@ int compare_indices(SparseTensor& tsr, size_t i, size_t j) {
 
 }
 
-void set_semisparse_indices_by_sparse_ref(SparseTensor& dest, std::vector<size_t>& fiber_idx, SparseTensor& ref) {
+void set_semisparse_indices_by_sparse_ref(SparseTensor& dest, std::vector<size_t>& fiber_idx, SparseTensor& ref, size_t mode) {
     size_t lastidx = ref.num_chunks;
     assert(dest.nmodes == ref.nmodes);
-
-    std::unique_ptr<size_t[]> sort_order(new size_t [ref.nmodes]);
-    sort_order[ref.nmodes - 1] = dest.dense_order(cpu)[0];
-    for(size_t m = 0; m < ref.nmodes - 1; ++m) {
-        if(m < dest.dense_order(cpu)[0]) {
-            sort_order[m] = m;
-        } else {
-            sort_order[m] = m + 1;
-        }
-    }
-    ref.sort_index(sort_order.get());
 
     fiber_idx.clear();
     dest.num_chunks = 0;
     std::unique_ptr<size_t[]> indices(new size_t [ref.nmodes]);
     std::unique_ptr<Scalar[]> chunk(new Scalar [dest.chunk_size] ());
     for(size_t i = 0; i < ref.num_chunks; ++i) {
-        if(lastidx == ref.num_chunks || compare_indices(ref, lastidx, i) != 0) {
+        if(lastidx == ref.num_chunks || compare_indices(ref, lastidx, i, mode) != 0) {
             ref.offset_to_indices(indices.get(), i * ref.chunk_size);
             dest.append(indices.get(), chunk.get());
+            lastidx = i;
+            fiber_idx.push_back(i);
         }
-        lastidx = i;
-        fiber_idx.push_back(i);
     }
     fiber_idx.push_back(ref.num_chunks);
 }

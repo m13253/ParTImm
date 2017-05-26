@@ -25,7 +25,7 @@
 namespace pti {
 
 SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode);
-void set_semisparse_indices_by_sparse_ref(SparseTensor& dest, std::vector<size_t>& fiber_idx, SparseTensor& ref);
+void set_semisparse_indices_by_sparse_ref(SparseTensor& dest, std::vector<size_t>& fiber_idx, SparseTensor& ref, size_t mode);
 
 }
 
