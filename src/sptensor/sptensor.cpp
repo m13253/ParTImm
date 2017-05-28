@@ -22,7 +22,19 @@
 
 namespace pti {
 
+SparseTensor::SparseTensor() {
+    this->nmodes = 0;
+    this->chunk_size = 0;
+    this->num_chunks = 0;
+    this->indices = nullptr;
+}
+
 SparseTensor::SparseTensor(size_t nmodes, size_t const shape[], bool const is_dense[]) {
+    this->indices = nullptr;
+    reset(nmodes, shape, is_dense);
+}
+
+SparseTensor& SparseTensor::reset(size_t nmodes, size_t const shape[], bool const is_dense[]) {
 
     // nmodes
     this->nmodes = nmodes;
@@ -83,7 +95,10 @@ SparseTensor::SparseTensor(size_t nmodes, size_t const shape[], bool const is_de
     this->num_chunks = 0;
 
     // indices
+    delete[] this->indices;
     this->indices = new MemBlock<size_t[]> [nmodes];
+
+    return *this;
 }
 
 SparseTensor::~SparseTensor() {

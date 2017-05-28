@@ -48,9 +48,13 @@ struct SparseTensor : public BaseTensor {
 
 public:
 
-    SparseTensor(size_t nmodes, size_t const shape[], bool const is_dense[]);
+    explicit SparseTensor();
+
+    explicit SparseTensor(size_t nmodes, size_t const shape[], bool const is_dense[]);
 
     ~SparseTensor();
+
+    SparseTensor& reset(size_t nmodes, size_t const shape[], bool const is_dense[]);
 
     void offset_to_indices(size_t indices[], size_t offset);
 
@@ -69,6 +73,9 @@ public:
 
     SparseTensor to_fully_sparse();
     SparseTensor to_fully_dense();
+
+    double norm();
+    void rand();
 
 };
 
