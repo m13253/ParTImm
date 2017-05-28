@@ -49,9 +49,9 @@ struct SparseTensor : public BaseTensor {
 public:
 
     explicit SparseTensor();
-
     explicit SparseTensor(size_t nmodes, size_t const shape[], bool const is_dense[]);
-
+    SparseTensor(SparseTensor&& other);
+    SparseTensor& operator= (SparseTensor&& other);
     ~SparseTensor();
 
     SparseTensor& reset(size_t nmodes, size_t const shape[], bool const is_dense[]);

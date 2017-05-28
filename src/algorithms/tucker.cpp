@@ -44,8 +44,7 @@ SparseTensor tucker_decomposition(
         U[n].reset(2, U_shape, U_is_dense);
         U[n].rand();
     }
-
-    std::unique_ptr<SparseTensor> core;
+    SparseTensor core;
 
     double fit = 0;
     for(unsigned iter = 0; iter < maxiters; ++iter) {
@@ -56,7 +55,8 @@ SparseTensor tucker_decomposition(
             size_t n = dimorder[ni];
             for(size_t m = 0; m < N; ++m) {
                 if(m != n) {
-                    SparseTensor *Utilde_next = new SparseTensor(tensor_times_matrix(*Utilde, U[m], m));
+                    SparseTensor *Utilde_next = new SparseTensor;
+                    *Utilde_next = tensor_times_matrix(*Utilde, U[m], m);
                     delete Utilde;
                     Utilde = Utilde_next;
                 }
@@ -64,9 +64,9 @@ SparseTensor tucker_decomposition(
             // U[n] = nvecs(Utilde, n, R[n]);
         }
 
-        core.reset(new SparseTensor(tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1])));
+        core = tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1]);
 
-        double normresidual = std::hypot(normX, core->norm());
+        double normresidual = std::hypot(normX, core.norm());
         fit = 1 - normresidual / normX;
         double fitchange = std::fabs(fitold - fit);
 
@@ -75,7 +75,7 @@ SparseTensor tucker_decomposition(
         }
     }
 
-    return *core;
+    return core;
 }
 
 }

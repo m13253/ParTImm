@@ -19,6 +19,7 @@
 #include <ParTI/algorithm.hpp>
 #include <cassert>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <ParTI/error.hpp>
 #include <ParTI/errcode.hpp>

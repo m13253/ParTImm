@@ -19,6 +19,7 @@
 #include <ParTI/sptensor.hpp>
 #include <cstring>
 #include <memory>
+#include <utility>
 
 namespace pti {
 

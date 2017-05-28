@@ -38,15 +38,30 @@ public:
 
     explicit MemBlock() {
         int num_nodes = session.mem_nodes.size();
-        pointers = new T* [num_nodes]();
         last_node = -1;
+        pointers = new T* [num_nodes]();
+    }
+
+    MemBlock(MemBlock&& other) {
+        last_node = other.last_node;
+        pointers = other.pointers;
+        other.pointers = nullptr;
+    }
+
+    MemBlock& operator= (MemBlock&& other) {
+        last_node = other.last_node;
+        pointers = other.pointers;
+        other.pointers = nullptr;
+        return *this;
     }
 
     ~MemBlock() {
-        int num_nodes = session.mem_nodes.size();
-        for(int i = 0; i < num_nodes; ++i) {
-            if(pointers[i]) {
-                session.mem_nodes[i]->free(pointers[i]);
+        if(pointers) {
+            int num_nodes = session.mem_nodes.size();
+            for(int i = 0; i < num_nodes; ++i) {
+                if(pointers[i]) {
+                    session.mem_nodes[i]->free(pointers[i]);
+                }
             }
         }
         delete[] pointers;
@@ -67,7 +82,7 @@ public:
     void free(int node) {
         if(node != last_node && pointers[node]) {
             session.mem_nodes[node]->free(pointers[node]);
-            pointers[node] = NULL;
+            pointers[node] = nullptr;
         }
     }
 
@@ -111,16 +126,35 @@ public:
 
     explicit MemBlock() {
         int num_nodes = session.mem_nodes.size();
+        last_node = -1;
         pointers = new T* [num_nodes]();
         sizes = new size_t [num_nodes]();
-        last_node = -1;
+    }
+
+    MemBlock(MemBlock&& other) {
+        last_node = other.last_node;
+        pointers = other.pointers;
+        sizes = other.sizes;
+        other.pointers = nullptr;
+        other.sizes = nullptr;
+    }
+
+    MemBlock& operator= (MemBlock&& other) {
+        last_node = other.last_node;
+        pointers = other.pointers;
+        sizes = other.sizes;
+        other.pointers = nullptr;
+        other.sizes = nullptr;
+        return *this;
     }
 
     ~MemBlock() {
-        int num_nodes = session.mem_nodes.size();
-        for(int i = 0; i < num_nodes; ++i) {
-            if(pointers[i]) {
-                session.mem_nodes[i]->free(pointers[i]);
+        if(pointers) {
+            int num_nodes = session.mem_nodes.size();
+            for(int i = 0; i < num_nodes; ++i) {
+                if(pointers[i]) {
+                    session.mem_nodes[i]->free(pointers[i]);
+                }
             }
         }
         delete[] pointers;
@@ -162,7 +196,7 @@ public:
     void free(int node) {
         if(node != last_node && pointers[node]) {
             session.mem_nodes[node]->free(pointers[node]);
-            pointers[node] = NULL;
+            pointers[node] = nullptr;
             sizes[node] = 0;
         }
     }

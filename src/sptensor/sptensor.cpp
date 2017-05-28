@@ -18,6 +18,7 @@
 
 #include <ParTI/sptensor.hpp>
 #include <cstring>
+#include <utility>
 #include <ParTI/utils.hpp>
 
 namespace pti {
@@ -32,6 +33,42 @@ SparseTensor::SparseTensor() {
 SparseTensor::SparseTensor(size_t nmodes, size_t const shape[], bool const is_dense[]) {
     this->indices = nullptr;
     reset(nmodes, shape, is_dense);
+}
+
+SparseTensor::SparseTensor(SparseTensor&& other) {
+    this->nmodes = other.nmodes;
+    this->shape = std::move(other.shape);
+    this->is_dense = std::move(other.is_dense);
+    this->dense_order = std::move(other.dense_order);
+    this->sparse_order = std::move(other.sparse_order);
+    this->strides = std::move(other.strides);
+    this->chunk_size = other.chunk_size;
+    this->num_chunks = other.num_chunks;
+    this->indices = other.indices;
+
+    other.nmodes = 0;
+    other.chunk_size = 0;
+    other.num_chunks = 0;
+    other.indices = nullptr;
+}
+
+SparseTensor& SparseTensor::operator= (SparseTensor&& other) {
+    this->nmodes = other.nmodes;
+    this->shape = std::move(other.shape);
+    this->is_dense = std::move(other.is_dense);
+    this->dense_order = std::move(other.dense_order);
+    this->sparse_order = std::move(other.sparse_order);
+    this->strides = std::move(other.strides);
+    this->chunk_size = other.chunk_size;
+    this->num_chunks = other.num_chunks;
+    this->indices = other.indices;
+
+    other.nmodes = 0;
+    other.chunk_size = 0;
+    other.num_chunks = 0;
+    other.indices = nullptr;
+
+    return *this;
 }
 
 SparseTensor& SparseTensor::reset(size_t nmodes, size_t const shape[], bool const is_dense[]) {

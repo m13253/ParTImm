@@ -36,7 +36,7 @@ public:
     explicit Error(int code, char const* msg) :
         std::runtime_error(msg) {
         err_code = code;
-        err_file = NULL;
+        err_file = nullptr;
         err_line = 0;
     }
     explicit Error(int code, char const* msg, char const* file, unsigned line) :

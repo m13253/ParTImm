@@ -11,6 +11,7 @@ option(USE_MKL "Use Intel MKL library" OFF)
 
 if(USE_CUDA)
     find_package(CUDA REQUIRED)
+    list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
     add_definitions(-DPARTI_USE_CUDA)
     link_libraries(${CUDA_cusparse_LIBRARY})
     link_libraries(${CUDA_cusolver_LIBRARY})
