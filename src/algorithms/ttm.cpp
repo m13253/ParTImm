@@ -87,14 +87,24 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
     Timer timer(cpu);
     timer.start();
 
+    size_t Y_slice_size = Y.strides(cpu)[mode];
+    // Y_num_slices should == X.chunk_size
+    size_t Y_num_slices = Y.chunk_size / Y_slice_size;
+    // i is chunk-level on Y
     for(size_t i = 0; i < Y.num_chunks; ++i) {
         size_t inz_begin = fiberidx[i];
         size_t inz_end = fiberidx[i + 1];
+        // j is chunk-level on X,
+        // for each Y[i] corresponds to all X[j]
         for(size_t j = inz_begin; j < inz_end; ++j) {
             size_t r = X.indices[mode](cpu)[j];
-            for(size_t k = 0; k < ncols; ++k) {
-                std::fprintf(stderr, "Y[%zu*%zu + %zu] += X[%zu] * U[%zu*%zu + %zu]\n", i, Y.chunk_size, k, j, r, U.chunk_size, k);
-                Y_values[i * Y.chunk_size + k] += X_values[j] * U_values[r * stride + k];
+            // We will cut a chunk on Y into slices * fibers,
+            // a slice on Y corresponds to a chunk on X
+            for(size_t k = 0; k < Y_num_slices; ++k) {
+                // Then we iterate columns from U
+                for(size_t c = 0; c < ncols; ++c) {
+                    Y_values[i * Y.chunk_size + k * Y_slice_size + c] += X_values[j * X.chunk_size + k] * U_values[r * stride + c];
+                }
             }
         }
     }
