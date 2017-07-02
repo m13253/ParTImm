@@ -43,6 +43,8 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
     ptiCheckError(U.dense_order(cpu)[1] != 1, ERR_SHAPE_MISMATCH, "U.dense_order[1] != 1");
     ptiCheckError(X.shape(cpu)[mode] != nrows, ERR_SHAPE_MISMATCH, "X.shape[mode] != U.nrows");
 
+    ptiCheckError(X.is_dense(cpu)[mode], ERR_UNKNOWN, "fixme: X.is_dense[mode] should be false");
+
     std::unique_ptr<size_t[]> sort_order(new size_t [nmodes]);
     sort_order[nmodes - 1] = mode;
     for(size_t m = 0; m < nmodes - 1; ++m) {
@@ -62,12 +64,14 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
             Y_shape[m] = ncols;
         }
     }
+    bool const* X_is_dense = X.is_dense(cpu);
     std::unique_ptr<bool[]> Y_is_dense(new bool [nmodes]);
     for(size_t m = 0; m < nmodes; ++m) {
-        Y_is_dense[m] = m == mode;
+        Y_is_dense[m] = X_is_dense[m] || m == mode;
     }
 
     SparseTensor Y(nmodes, Y_shape.get(), Y_is_dense.get());
+    Y.sort_index(sort_order.get());
 
     std::vector<size_t> fiberidx;
     set_semisparse_indices_by_sparse_ref(Y, fiberidx, X, mode);
