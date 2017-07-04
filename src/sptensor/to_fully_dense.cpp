@@ -50,7 +50,7 @@ SparseTensor SparseTensor::to_fully_dense() {
                 }
                 offset += coord[result_dense_order[nmodes - 1]];
             }
-            std::fprintf(stderr, "(%s) => %zu\n", array_to_string(coord.get(), nmodes).c_str(), offset);
+            //std::fprintf(stderr, "(%s) => %zu\n", array_to_string(coord.get(), nmodes).c_str(), offset);
             result.values(cpu)[offset] = values(cpu)[j];
         }
     }

@@ -54,6 +54,12 @@ private:
 
 };
 
+void tick();
+
+double tock();
+
+double tock(char const* name);
+
 }
 
 #endif

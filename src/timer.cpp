@@ -88,4 +88,20 @@ double Timer::print_elapsed_time(char const* name) const {
     return elapsed_time;
 }
 
+static Timer default_timer((cpu));
+
+void tick() {
+    default_timer.start();
+}
+
+double tock() {
+    default_timer.stop();
+    return default_timer.elapsed_time();
+}
+
+double tock(char const* name) {
+    default_timer.stop();
+    return default_timer.print_elapsed_time(name);
+}
+
 }

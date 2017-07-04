@@ -80,9 +80,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
     Scalar* Y_values = Y.values(cpu);
     Scalar* U_values = U.values(cpu);
 
-    std::fprintf(stderr, "X = %s\n", X.to_string(true).c_str());
-    std::fprintf(stderr, "U = %s\n", U.to_string(true).c_str());
-    std::fprintf(stderr, "fiberidx = %s\n", array_to_string(fiberidx.data(), fiberidx.size()).c_str());
+    std::fprintf(stderr, "[CPU TTM] fiberidx = [%s]\n", array_to_string(fiberidx.data(), fiberidx.size()).c_str());
 
     Timer timer(cpu);
     timer.start();
@@ -110,7 +108,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
     }
 
     timer.stop();
-    timer.print_elapsed_time("CPU TTM");
+    timer.print_elapsed_time("CPU TTM Kernel");
 
     return Y;
 }

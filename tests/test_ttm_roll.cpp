@@ -27,12 +27,9 @@
 using namespace pti;
 
 int main(int argc, char const* argv[]) {
-    size_t mode = 0;
     bool dense_format = false;
     size_t limit = 10;
     ParamDefinition defs[] = {
-        { "-m",             PARAM_SIZET, { &mode } },
-        { "--mode",         PARAM_SIZET, { &mode } },
         { "-d",             PARAM_BOOL,  { &dense_format } },
         { "--dense-format", PARAM_BOOL,  { &dense_format } },
         { "-l",             PARAM_SIZET, { &limit } },
@@ -42,9 +39,8 @@ int main(int argc, char const* argv[]) {
     std::vector<char const*> args = parse_args(argc, argv, defs);
 
     if(args.size() != 2 && args.size() != 3) {
-        std::printf("Usage: %s [OPTIONS] X U [Y]\n\n", argv[0]);
+        std::printf("Usage: %s [OPTIONS] X U1 U2 ...\n\n", argv[0]);
         std::printf("Options:\n");
-        std::printf("\t-m, --mode\tUse specific mode for multiplication [Default: 0]\n");
         std::printf("\t-d, --dense-format\tPrint tensor in dense format instead of sparse format.\n");
         std::printf("\t-l, --limit\t\tLimit the number of elements to print [Default: 10].\n");
         std::printf("\n");
@@ -60,27 +56,29 @@ int main(int argc, char const* argv[]) {
     SparseTensor X = SparseTensor::load(fX, 1);
     io_result = std::fclose(fX);
     ptiCheckOSError(io_result != 0);
+    std::printf("X = %s\n", X.to_string(!dense_format, limit).c_str());
 
-    std::FILE* fU = std::fopen(args[1], "r");
-    ptiCheckOSError(!fU);
-    SparseTensor U = SparseTensor::load(fU, 1).to_fully_dense();
-    io_result = std::fclose(fU);
-    ptiCheckOSError(io_result != 0);
+    for(size_t argi = 1; argi < args.size(); ++argi) {
 
-    Timer timer(cpu);
-    timer.start();
-    SparseTensor Y = tensor_times_matrix(X, U, mode);
-    timer.stop();
-
-    std::printf("Y = %s\n", Y.to_string(!dense_format, limit).c_str());
-    timer.print_elapsed_time("TTM (CPU, 3d1s)");
-
-    if(args.size() == 3) {
-        std::FILE* fY = std::fopen(args[2], "w");
-        ptiCheckOSError(!fY);
-        Y.dump(fY, 1);
-        io_result = std::fclose(fY);
+        std::FILE* fU = std::fopen(args[argi], "r");
+        ptiCheckOSError(!fU);
+        SparseTensor U = SparseTensor::load(fU, 1).to_fully_dense();
+        io_result = std::fclose(fU);
         ptiCheckOSError(io_result != 0);
+        std::printf("U[%zu] = %s\n", argi, U.to_string(false, limit).c_str());
+
+        size_t mode = X.nmodes - argi;
+
+        Timer timer(cpu);
+        timer.start();
+        SparseTensor Y = tensor_times_matrix(X, U, mode);
+        timer.stop();
+
+        std::printf("Y[%zu] = %s\n", argi, Y.to_string(!dense_format, limit).c_str());
+        timer.print_elapsed_time("TTM");
+
+        X = std::move(Y);
+
     }
 
     return 0;
