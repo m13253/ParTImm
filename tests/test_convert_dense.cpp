@@ -59,7 +59,7 @@ int main(int argc, char const* argv[]) {
     std::printf("tsr (dense) = %s\n", tsr.to_string(!dense_format, limit).c_str());
 
     if(args.size() == 2) {
-        std::FILE* fo = std::fopen(args[0], "w");
+        std::FILE* fo = std::fopen(args[1], "w");
         ptiCheckOSError(!fo);
         tsr.dump(fo, 1);
         io_result = std::fclose(fo);

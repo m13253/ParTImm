@@ -45,6 +45,7 @@ SparseTensor::SparseTensor(SparseTensor&& other) {
     this->chunk_size = other.chunk_size;
     this->num_chunks = other.num_chunks;
     this->indices = other.indices;
+    this->values = std::move(other.values);
 
     other.nmodes = 0;
     other.chunk_size = 0;
@@ -62,6 +63,7 @@ SparseTensor& SparseTensor::operator= (SparseTensor&& other) {
     this->chunk_size = other.chunk_size;
     this->num_chunks = other.num_chunks;
     this->indices = other.indices;
+    this->values = std::move(other.values);
 
     other.nmodes = 0;
     other.chunk_size = 0;
@@ -134,6 +136,9 @@ SparseTensor& SparseTensor::reset(size_t nmodes, size_t const shape[], bool cons
     // indices
     delete[] this->indices;
     this->indices = new MemBlock<size_t[]> [nmodes];
+
+    // values
+    this->values.allocate(cpu, 0);
 
     return *this;
 }

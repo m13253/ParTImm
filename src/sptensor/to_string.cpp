@@ -112,7 +112,14 @@ std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
             } else {
                 result += ", ";
             }
-            offset_to_indices(next_coord.get(), i);
+            for(;;) {
+                bool inbound = offset_to_indices(next_coord.get(), i);
+                if(inbound || i >= num_chunks * chunk_size) {
+                    break;
+                } else {
+                    ++i;
+                }
+            }
             bool match_next = std::memcmp(coord.get(), next_coord.get(), nmodes * sizeof (size_t)) == 0;
             if(coord[last_mode] < shape(cpu)[last_mode]) {
                 if(match_next) {

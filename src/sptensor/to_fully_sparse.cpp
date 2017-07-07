@@ -36,8 +36,10 @@ SparseTensor SparseTensor::to_fully_sparse() {
     std::unique_ptr<size_t[]> coord(new size_t [nmodes]);
     for(size_t i = 0; i < num_chunks; ++i) {
         for(size_t j = i * chunk_size; j < i * chunk_size + chunk_size; ++j) {
-            offset_to_indices(coord.get(), j);
-            result.append(coord.get(), values(cpu)[j]);
+            bool inbound = offset_to_indices(coord.get(), j);
+            if(inbound) {
+                result.append(coord.get(), values(cpu)[j]);
+            }
         }
     }
 

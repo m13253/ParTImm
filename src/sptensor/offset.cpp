@@ -22,10 +22,10 @@
 
 namespace pti {
 
-void SparseTensor::offset_to_indices(size_t indices[], size_t offset) {
+bool SparseTensor::offset_to_indices(size_t indices[], size_t offset) {
     if(offset >= num_chunks * chunk_size) {
         std::memcpy(indices, this->shape(cpu), nmodes * sizeof (size_t));
-        return;
+        return false;
     }
     bool* is_dense = this->is_dense(cpu);
     for(size_t m = 0; m < nmodes; ++m) {
@@ -44,6 +44,11 @@ void SparseTensor::offset_to_indices(size_t indices[], size_t offset) {
         }
         indices[dense_order[0]] = intra_chunk;
     }
+    bool inbound = true;
+    for(size_t m = 0; m < this->nmodes; ++m) {
+        inbound = inbound && indices[m] < this->shape(cpu)[m];
+    }
+    return inbound;
 }
 
 }

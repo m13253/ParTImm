@@ -37,21 +37,24 @@ SparseTensor SparseTensor::to_fully_dense() {
     std::memcpy(result_dense_order + sparse_order.size(), dense_order(cpu), dense_order.size() * sizeof (size_t));
 
     result.reserve(1);
+    std::memset(result.values(cpu), 0, 1 * result.chunk_size * sizeof (Scalar));
 
     std::unique_ptr<size_t[]> coord(new size_t [nmodes]);
     for(size_t i = 0; i < num_chunks; ++i) {
         for(size_t j = i * chunk_size; j < i * chunk_size + chunk_size; ++j) {
-            offset_to_indices(coord.get(), j);
-            size_t offset = 0;
-            if(nmodes != 0) {
-                for(size_t m = 0; m + 1 < nmodes; ++m) {
-                    offset += coord[result_dense_order[m]];
-                    offset *= result.strides(cpu)[result_dense_order[m + 1]];
+            bool inbound = offset_to_indices(coord.get(), j);
+            if(inbound) {
+                size_t offset = 0;
+                if(nmodes != 0) {
+                    for(size_t m = 0; m + 1 < nmodes; ++m) {
+                        offset += coord[result_dense_order[m]];
+                        offset *= result.strides(cpu)[result_dense_order[m + 1]];
+                    }
+                    offset += coord[result_dense_order[nmodes - 1]];
                 }
-                offset += coord[result_dense_order[nmodes - 1]];
+                result.values(cpu)[offset] = values(cpu)[j];
+                std::fprintf(stderr, "(%s) => %zu, value = %f\n", array_to_string(coord.get(), nmodes).c_str(), offset, values(cpu)[j]);
             }
-            //std::fprintf(stderr, "(%s) => %zu\n", array_to_string(coord.get(), nmodes).c_str(), offset);
-            result.values(cpu)[offset] = values(cpu)[j];
         }
     }
 

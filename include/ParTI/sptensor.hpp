@@ -56,7 +56,7 @@ public:
 
     SparseTensor& reset(size_t nmodes, size_t const shape[], bool const is_dense[]);
 
-    void offset_to_indices(size_t indices[], size_t offset);
+    bool offset_to_indices(size_t indices[], size_t offset);
 
     void dump(std::FILE* fp, size_t start_index = 0);
 
