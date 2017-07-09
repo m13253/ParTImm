@@ -49,6 +49,16 @@ public:
     }
 
     MemBlock& operator= (MemBlock&& other) {
+        if(pointers) {
+            int num_nodes = session.mem_nodes.size();
+            for(int i = 0; i < num_nodes; ++i) {
+                if(pointers[i]) {
+                    session.mem_nodes[i]->free(pointers[i]);
+                }
+            }
+        }
+        delete[] pointers;
+
         last_node = other.last_node;
         pointers = other.pointers;
         other.pointers = nullptr;
@@ -140,6 +150,17 @@ public:
     }
 
     MemBlock& operator= (MemBlock&& other) {
+        if(pointers) {
+            int num_nodes = session.mem_nodes.size();
+            for(int i = 0; i < num_nodes; ++i) {
+                if(pointers[i]) {
+                    session.mem_nodes[i]->free(pointers[i]);
+                }
+            }
+        }
+        delete[] pointers;
+        delete[] sizes;
+
         last_node = other.last_node;
         pointers = other.pointers;
         sizes = other.sizes;

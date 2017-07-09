@@ -54,6 +54,8 @@ SparseTensor::SparseTensor(SparseTensor&& other) {
 }
 
 SparseTensor& SparseTensor::operator= (SparseTensor&& other) {
+    delete[] this->indices;
+
     this->nmodes = other.nmodes;
     this->shape = std::move(other.shape);
     this->is_dense = std::move(other.is_dense);
