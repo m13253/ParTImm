@@ -139,8 +139,6 @@ std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
             // Compare current non-zero element to current coordinate
             int coord_compare = compare_indices(next_coord.get(), coord.get(), mode_order.get(), nmodes);
 
-            std::fprintf(stderr, "[%s] %d [%s]\n", array_to_string(next_coord.get(), nmodes).c_str(), coord_compare, array_to_string(coord.get(), nmodes).c_str());
-
             if(inbound) {
                 if(coord_compare >= 0) {
                     if(first_in_level) {
