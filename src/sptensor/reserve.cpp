@@ -36,7 +36,7 @@ size_t SparseTensor::reserve(size_t size) {
     values.copy_to(cpu);
     if(values.size() < size * chunk_size) { // Need reallocation
         values.resize(cpu, size * chunk_size);
-    } else {
+    } else if(chunk_size != 0) {
         result = values.size() / chunk_size;
     }
 

@@ -25,6 +25,24 @@
 
 namespace pti {
 
+namespace {
+
+int compare_indices(size_t const i[], size_t const j[], size_t const mode_order[], size_t nmodes) {
+    for(size_t m = 0; m < nmodes; ++m) {
+        size_t mode = mode_order[m];
+        size_t idx_i = i[mode];
+        size_t idx_j = j[mode];
+        if(idx_i < idx_j) {
+            return -1;
+        } else if(idx_i > idx_j) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+}
+
 std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
     std::string result = "pti::SparseTensor(\n  shape = [";
     result += array_to_string(shape(cpu), nmodes);
@@ -76,28 +94,33 @@ std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
             result += '\n';
         }
     } else if(nmodes != 0) {
+        // mode_order = concat(sparse_order, dense_order)
         std::unique_ptr<size_t[]> mode_order(new size_t [nmodes]);
         std::memcpy(mode_order.get(), sparse_order(cpu), sparse_order.size() * sizeof (size_t));
         std::memcpy(mode_order.get() + sparse_order.size(), dense_order(cpu), dense_order.size() * sizeof (size_t));
 
         size_t nonzero_modes = 0;
         for(size_t m = 0; m < nmodes; ++m) {
-            if(shape(cpu)[mode_order[m]] != 0) {
-                ++nonzero_modes;
-            } else {
+            if(shape(cpu)[mode_order[m]] == 0) {
                 break;
             }
+            ++nonzero_modes;
         }
         if(nonzero_modes != nmodes) {
             ++nonzero_modes;
         }
-        size_t last_mode = mode_order[nonzero_modes - 1];
+
+        size_t i = 0;
+        size_t level = 0;
+        size_t first_in_level = false;
 
         std::unique_ptr<size_t[]> coord(new size_t [nmodes] ());
         std::unique_ptr<size_t[]> next_coord(new size_t [nmodes]);
-        size_t level = 0;
+        bool inbound = offset_to_indices(next_coord.get(), i);
 
-        for(size_t i = 0; i <= num_chunks * chunk_size;) {
+        do {
+
+            // Ascending levels
             if(level != nonzero_modes) {
                 if(level != 0) {
                     result += ",\n";
@@ -109,52 +132,60 @@ std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
                     result += '[';
                 }
                 level = nonzero_modes;
-            } else {
-                result += ", ";
+                first_in_level = true;
             }
-            for(;;) {
-                bool inbound = offset_to_indices(next_coord.get(), i);
-                if(inbound || i >= num_chunks * chunk_size) {
-                    break;
+            size_t mode = mode_order[level - 1];
+
+            // Compare current non-zero element to current coordinate
+            int coord_compare = compare_indices(next_coord.get(), coord.get(), mode_order.get(), nmodes);
+
+            std::fprintf(stderr, "[%s] %d [%s]\n", array_to_string(next_coord.get(), nmodes).c_str(), coord_compare, array_to_string(coord.get(), nmodes).c_str());
+
+            if(inbound) {
+                if(coord_compare >= 0) {
+                    if(first_in_level) {
+                        first_in_level = false;
+                    } else {
+                        result += ", ";
+                    }
+                    if(coord_compare == 0) {
+                        // Print out current element
+                        result += std::to_string(values(cpu)[i]);
+                        ++coord[mode];
+                        ++i;
+                        offset_to_indices(next_coord.get(), i);
+                    } else {
+                        // Print out placeholder
+                        result += "0.000000";
+                        ++coord[mode];
+                    }
                 } else {
+                    // Skip out-of-bounds
                     ++i;
+                    offset_to_indices(next_coord.get(), i);
+                    continue;
                 }
             }
-            bool match_next = std::memcmp(coord.get(), next_coord.get(), nmodes * sizeof (size_t)) == 0;
-            if(coord[last_mode] < shape(cpu)[last_mode]) {
-                if(match_next) {
-                    result += std::to_string(values(cpu)[i]);
-                } else {
-                    result += "0";
-                }
-                ++coord[last_mode];
-            }
-            for(size_t m = 0; m + 1 < nonzero_modes; m++) {
-                size_t mode = mode_order[nonzero_modes - m - 1];
+
+            // Calculate carry
+            while(level != 0) {
                 if(limit != 0 && coord[mode] >= limit) {
                     result += ", ...";
                 } else if(coord[mode] < shape(cpu)[mode]) {
                     break;
                 }
-                --level;
                 coord[mode] = 0;
-                ++coord[mode_order[nonzero_modes - m - 2]];
+                --level;
                 result += ']';
+                if(level == 0) {
+                    break;
+                }
+                mode = mode_order[level - 1];
+                ++coord[mode];
             }
-            if(limit != 0 && coord[mode_order[0]] >= limit) {
-                result += ", ...";
-                break;
-            } else if(coord[mode_order[0]] == shape(cpu)[mode_order[0]]) {
-                break;
-            }
-            if(match_next) {
-                ++i;
-            }
-        }
-        for(size_t m = 0; m < level; ++m) {
-            result += ']';
-        }
-        result += '\n';
+
+        } while(level != 0);
+        result += "\n";
     }
     result += "  }\n)";
     return result;
