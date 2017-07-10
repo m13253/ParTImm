@@ -151,14 +151,13 @@ std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
                     if(coord_compare == 0) {
                         // Print out current element
                         result += std::to_string(values(cpu)[i]);
-                        ++coord[mode];
                         ++i;
                         offset_to_indices(next_coord.get(), i);
                     } else {
                         // Print out placeholder
                         result += "0.000000";
-                        ++coord[mode];
                     }
+                    ++coord[mode];
                 } else {
                     // Skip out-of-bounds
                     ++i;
