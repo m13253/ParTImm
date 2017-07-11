@@ -65,7 +65,7 @@ int main(int argc, char const* argv[]) {
         SparseTensor U = SparseTensor::load(fU, 1).to_fully_dense();
         io_result = std::fclose(fU);
         ptiCheckOSError(io_result != 0);
-        std::printf("U[%zu] = %s\n", argi, U.to_string(false, limit).c_str());
+        std::printf("\nU[%zu] = %s\n", argi, U.to_string(false, limit).c_str());
 
         size_t mode = X.nmodes - argi;
 
@@ -74,8 +74,8 @@ int main(int argc, char const* argv[]) {
         SparseTensor Y = tensor_times_matrix(X, U, mode);
         timer.stop();
 
-        std::printf("Y[%zu] = %s\n", argi, Y.to_string(!dense_format, limit).c_str());
         timer.print_elapsed_time("TTM");
+        std::printf("Result: Y[%zu] = %s\n", argi, Y.to_string(!dense_format, limit).c_str());
 
         X = std::move(Y);
 

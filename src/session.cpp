@@ -62,9 +62,9 @@ void Session::print_devices() const {
         std::fprintf(stderr, "%4zu  %-67s %4d\n", i, device.name.c_str(), device.mem_node);
     }
     if(num_devices != 1) {
-        std::fprintf(stderr, "\x1b[1m%zu devices detected.\x1b[21m\n", num_devices);
+        std::fprintf(stderr, "\x1b[1m%zu devices detected.\x1b[21m\n\n", num_devices);
     } else {
-        std::fprintf(stderr, "\x1b[1m%zu device detected.\x1b[21m\n", num_devices);
+        std::fprintf(stderr, "\x1b[1m%zu device detected.\x1b[21m\n\n", num_devices);
     }
 }
 

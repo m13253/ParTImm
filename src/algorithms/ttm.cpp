@@ -32,9 +32,10 @@ namespace pti {
 SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) {
 
     size_t nmodes = X.nmodes;
+    size_t nspmodes = X.sparse_order.size();
     size_t nrows = U.shape(cpu)[0];
     size_t ncols = U.shape(cpu)[1];
-    size_t stride = U.strides(cpu)[1];
+    size_t Ustride = U.strides(cpu)[1];
 
     ptiCheckError(mode >= nmodes, ERR_SHAPE_MISMATCH, "shape mismatch");
 
@@ -45,15 +46,15 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
 
     ptiCheckError(X.is_dense(cpu)[mode], ERR_UNKNOWN, "fixme: X.is_dense[mode] should be false");
 
-    std::unique_ptr<size_t[]> sort_order(new size_t [nmodes]);
-    sort_order[nmodes - 1] = mode;
-    for(size_t m = 0; m < nmodes - 1; ++m) {
-        if(m < mode) {
-            sort_order[m] = m;
-        } else {
-            sort_order[m] = m + 1;
+    std::unique_ptr<size_t[]> sort_order(new size_t [nspmodes]);
+    for(size_t m = 0, i = 0; m < nspmodes; ++m) {
+        size_t sort_order_mode = X.sparse_order(cpu)[m];
+        if(sort_order_mode != mode) {
+            sort_order[i] = sort_order_mode;
+            ++i;
         }
     }
+    sort_order[nspmodes - 1] = mode;
     X.sort_index(sort_order.get());
 
     std::unique_ptr<size_t[]> Y_shape(new size_t [nmodes]);
@@ -80,14 +81,18 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
     Scalar* Y_values = Y.values(cpu);
     Scalar* U_values = U.values(cpu);
 
-    //std::fprintf(stderr, "[CPU TTM] fiberidx = [%s]\n", array_to_string(fiberidx.data(), fiberidx.size()).c_str());
+    /*
+    std::unique_ptr<size_t[]> idxY(new size_t[nmodes]);
+    std::unique_ptr<size_t[]> idxX(new size_t[nmodes]);
+    std::unique_ptr<size_t[]> idxU(new size_t[nmodes]);
+    */
 
     Timer timer(cpu);
     timer.start();
 
-    size_t Y_slice_size = Y.strides(cpu)[mode];
-    // Y_num_slices should == X.chunk_size
-    size_t Y_num_slices = Y.chunk_size / Y_slice_size;
+    size_t Y_subtrunk_size = X.chunk_size;
+    size_t Y_num_subtrunks = Y.strides(cpu)[mode];
+    assert(Y_num_subtrunks * Y_subtrunk_size == Y.chunk_size);
     // i is chunk-level on Y
     for(size_t i = 0; i < Y.num_chunks; ++i) {
         size_t inz_begin = fiberidx[i];
@@ -96,12 +101,19 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
         // for each Y[i] corresponds to all X[j]
         for(size_t j = inz_begin; j < inz_end; ++j) {
             size_t r = X.indices[mode](cpu)[j];
-            // We will cut a chunk on Y into slices * fibers,
-            // a slice on Y corresponds to a chunk on X
-            for(size_t k = 0; k < Y_num_slices; ++k) {
-                // Then we iterate columns from U
-                for(size_t c = 0; c < ncols; ++c) {
-                    Y_values[i * Y.chunk_size + k * Y_slice_size + c] += X_values[j * X.chunk_size + k] * U_values[r * stride + c];
+            // We will cut a chunk on Y into fiber * subchunks,
+            // a subchunk in Y corresponds to a chunk in X
+            for(size_t c = 0; c < Y_num_subtrunks; ++c) {
+                // Iterate elements from each subchunk in Y
+                for(size_t k = 0; k < Y_subtrunk_size; ++k) {
+                    /*
+                    Y.offset_to_indices(idxY.get(), i * Y.chunk_size + c * Y_subtrunk_size + k);
+                    X.offset_to_indices(idxX.get(), j * X.chunk_size + k);
+                    U.offset_to_indices(idxU.get(), r * Ustride + c);
+                    std::fprintf(stderr, "Y[%s] += X[%s] * U[%s]\n", array_to_string(idxY.get(), nmodes).c_str(), array_to_string(idxX.get(), nmodes).c_str(), array_to_string(idxU.get(), nmodes).c_str());
+                    */
+
+                    Y_values[i * Y.chunk_size + c * Y_subtrunk_size + k] += X_values[j * X.chunk_size + k] * U_values[r * Ustride + c];
                 }
             }
         }
