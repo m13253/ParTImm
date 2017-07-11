@@ -90,9 +90,9 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
     Timer timer(cpu);
     timer.start();
 
-    size_t Y_subtrunk_size = X.chunk_size;
-    size_t Y_num_subtrunks = Y.strides(cpu)[mode];
-    assert(Y_num_subtrunks * Y_subtrunk_size == Y.chunk_size);
+    size_t Y_subchunk_size = X.chunk_size;
+    size_t Y_num_subchunks = Y.strides(cpu)[mode];
+    assert(Y_num_subchunks * Y_subchunk_size == Y.chunk_size);
     // i is chunk-level on Y
     for(size_t i = 0; i < Y.num_chunks; ++i) {
         size_t inz_begin = fiberidx[i];
@@ -103,17 +103,17 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
             size_t r = X.indices[mode](cpu)[j];
             // We will cut a chunk on Y into fiber * subchunks,
             // a subchunk in Y corresponds to a chunk in X
-            for(size_t c = 0; c < Y_num_subtrunks; ++c) {
+            for(size_t c = 0; c < Y_num_subchunks; ++c) {
                 // Iterate elements from each subchunk in Y
-                for(size_t k = 0; k < Y_subtrunk_size; ++k) {
+                for(size_t k = 0; k < Y_subchunk_size; ++k) {
                     /*
-                    Y.offset_to_indices(idxY.get(), i * Y.chunk_size + c * Y_subtrunk_size + k);
+                    Y.offset_to_indices(idxY.get(), i * Y.chunk_size + c * Y_subchunk_size + k);
                     X.offset_to_indices(idxX.get(), j * X.chunk_size + k);
                     U.offset_to_indices(idxU.get(), r * Ustride + c);
                     std::fprintf(stderr, "Y[%s] += X[%s] * U[%s]\n", array_to_string(idxY.get(), nmodes).c_str(), array_to_string(idxX.get(), nmodes).c_str(), array_to_string(idxU.get(), nmodes).c_str());
                     */
 
-                    Y_values[i * Y.chunk_size + c * Y_subtrunk_size + k] += X_values[j * X.chunk_size + k] * U_values[r * Ustride + c];
+                    Y_values[i * Y.chunk_size + c * Y_subchunk_size + k] += X_values[j * X.chunk_size + k] * U_values[r * Ustride + c];
                 }
             }
         }
