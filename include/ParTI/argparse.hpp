@@ -62,12 +62,11 @@ struct ParamDefinition {
 
 #define ptiEndParamDefinition nullptr, PARAM_BOOL, { nullptr }
 
-std::vector<char const*> parse_args(int argc, char const* argv[], ParamDefinition const defs[]);
-
-class StrToNumError : public std::runtime_error {
-public:
-    StrToNumError() : std::runtime_error("Invalid number format") {}
-};
+std::vector<char const*> parse_args(
+    int argc,
+    char const* argv[],
+    ParamDefinition const defs[]
+);
 
 }
 

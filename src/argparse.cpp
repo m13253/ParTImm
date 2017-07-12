@@ -17,25 +17,12 @@
 */
 
 #include <ParTI/argparse.hpp>
+#include <ParTI/utils.hpp>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 
 namespace pti {
-
-template <typename Fn, typename ...Args>
-static auto strtonum(Fn fn, const char *str, Args &&...args) -> decltype(fn(str, nullptr, std::forward<Args>(args)...)) {
-    if(str[0] != '\0') {
-        char *endptr;
-        auto result = fn(str, &endptr, std::forward<Args>(args)...);
-        if(endptr == &str[std::strlen(str)]) {
-            return result;
-        } else {
-            throw StrToNumError();
-        }
-    } else {
-        throw StrToNumError();
-    }
-}
 
 static std::vector<std::string> split_array(char const* s) {
     std::vector<std::string> result;
@@ -70,48 +57,72 @@ std::vector<char const*> parse_args(int argc, char const* argv[], ParamDefinitio
                         break;
                     case PARAM_STRING:
                         ++argi;
+                        if(argi >= argc) {
+                            throw std::invalid_argument((std::string("No argument for option") + arg).c_str());
+                        }
                         *def->vstr = argv[argi];
                         break;
                     case PARAM_INT:
                         ++argi;
-                        *def->vint = strtonum(strtol, argv[argi], 0);
+                        if(argi >= argc) {
+                            throw std::invalid_argument((std::string("No argument for option") + arg).c_str());
+                        }
+                        *def->vint = strtonum(std::strtol, argv[argi], 0);
                         break;
                     case PARAM_SIZET:
                         ++argi;
-                        *def->vint = strtonum(strtoull, argv[argi], 0);
+                        if(argi >= argc) {
+                            throw std::invalid_argument((std::string("No argument for option") + arg).c_str());
+                        }
+                        *def->vint = strtonum(std::strtoull, argv[argi], 0);
                         break;
                     case PARAM_SCALAR:
                         ++argi;
-                        *def->vscalar = strtonum(strtod, argv[argi]);
+                        if(argi >= argc) {
+                            throw std::invalid_argument((std::string("No argument for option") + arg).c_str());
+                        }
+                        *def->vscalar = strtonum(std::strtod, argv[argi]);
                         break;
                     case PARAM_STRINGS:
                         ++argi;
+                        if(argi >= argc) {
+                            throw std::invalid_argument((std::string("No argument for option") + arg).c_str());
+                        }
                         def->vstrs->push_back(argv[argi]);
                         break;
                     case PARAM_INTS:
                         ++argi;
+                        if(argi >= argc) {
+                            throw std::invalid_argument((std::string("No argument for option") + arg).c_str());
+                        }
                         {
                             std::vector<std::string> vints = split_array(argv[argi]);
                             for(std::string const& vint : vints) {
-                                def->vints->push_back(strtonum(strtol, vint.c_str(), 0));
+                                def->vints->push_back(strtonum(std::strtol, vint.c_str(), 0));
                             }
                         }
                         break;
                     case PARAM_SIZETS:
                         ++argi;
+                        if(argi >= argc) {
+                            throw std::invalid_argument((std::string("No argument for option") + arg).c_str());
+                        }
                         {
                             std::vector<std::string> vsizets = split_array(argv[argi]);
                             for(std::string const& vsizet : vsizets) {
-                                def->vsizets->push_back(strtonum(strtoull, vsizet.c_str(), 0));
+                                def->vsizets->push_back(strtonum(std::strtoull, vsizet.c_str(), 0));
                             }
                         }
                         break;
                     case PARAM_SCALARS:
                         ++argi;
+                        if(argi >= argc) {
+                            throw std::invalid_argument((std::string("No argument for option") + arg).c_str());
+                        }
                         {
                             std::vector<std::string> vscalars = split_array(argv[argi]);
                             for(std::string const& vscalar : vscalars) {
-                                def->vscalars->push_back(strtonum(strtod, vscalar.c_str()));
+                                def->vscalars->push_back(strtonum(std::strtod, vscalar.c_str()));
                             }
                         }
                         break;

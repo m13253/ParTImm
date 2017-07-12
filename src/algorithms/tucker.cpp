@@ -27,9 +27,9 @@ namespace pti {
 SparseTensor tucker_decomposition(
     SparseTensor&   X,
     size_t const    R[],
+    size_t const    dimorder[],
     double          tol,
-    unsigned        maxiters,
-    size_t const    dimorder[]
+    unsigned        maxiters
 ) {
     size_t N = X.nmodes;
     double normX = X.norm();
@@ -42,7 +42,7 @@ SparseTensor tucker_decomposition(
         U_shape[0] = X.shape(cpu)[n];
         U_shape[1] = R[n];
         U[n].reset(2, U_shape, U_is_dense);
-        U[n].rand();
+        //U[n].rand();
     }
     SparseTensor core;
 

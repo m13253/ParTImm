@@ -16,10 +16,9 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <cstdio>
 #include <ParTI/algorithm.hpp>
 #include <ParTI/argparse.hpp>
-#include <ParTI/error.hpp>
+#include <ParTI/cfile.hpp>
 #include <ParTI/timer.hpp>
 #include <ParTI/session.hpp>
 #include <ParTI/sptensor.hpp>
@@ -53,20 +52,16 @@ int main(int argc, char const* argv[]) {
 
     session.print_devices();
 
-    int io_result;
-
-    std::FILE* fX = std::fopen(args[0], "r");
-    ptiCheckOSError(!fX);
+    CFile fX(args[0], "r");
     SparseTensor X = SparseTensor::load(fX, 1);
-    io_result = std::fclose(fX);
-    ptiCheckOSError(io_result != 0);
+    fX.fclose();
+
     std::printf("X = %s\n", X.to_string(!dense_format, limit).c_str());
 
-    std::FILE* fU = std::fopen(args[1], "r");
-    ptiCheckOSError(!fU);
+    CFile fU(args[1], "r");
     SparseTensor U = SparseTensor::load(fU, 1).to_fully_dense();
-    io_result = std::fclose(fU);
-    ptiCheckOSError(io_result != 0);
+    fU.fclose();
+
     std::printf("U = %s\n", U.to_string(false, limit).c_str());
 
     Timer timer(cpu);
@@ -78,11 +73,8 @@ int main(int argc, char const* argv[]) {
     timer.print_elapsed_time("TTM");
 
     if(args.size() == 3) {
-        std::FILE* fY = std::fopen(args[2], "w");
-        ptiCheckOSError(!fY);
+        CFile fY(args[2], "w");
         Y.dump(fY, 1);
-        io_result = std::fclose(fY);
-        ptiCheckOSError(io_result != 0);
     }
 
     return 0;

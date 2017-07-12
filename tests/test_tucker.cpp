@@ -16,12 +16,14 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <memory>
 #include <ParTI/algorithm.hpp>
 #include <ParTI/argparse.hpp>
 #include <ParTI/cfile.hpp>
 #include <ParTI/timer.hpp>
 #include <ParTI/session.hpp>
 #include <ParTI/sptensor.hpp>
+#include <ParTI/utils.hpp>
 
 using namespace pti;
 
@@ -40,8 +42,8 @@ int main(int argc, char const* argv[]) {
     };
     std::vector<char const*> args = parse_args(argc, argv, defs);
 
-    if(args.size() < 2) {
-        std::printf("Usage: %s [OPTIONS] X U1 U2 ...\n\n", argv[0]);
+    if(args.size() < 3) {
+        std::printf("Usage: %s [OPTIONS] X R1 R2 ... dimorder1 dimorder2 ...\n\n", argv[0]);
         std::printf("Options:\n");
         std::printf("\t-d, --dense-format\tPrint tensor in dense format instead of sparse format.\n");
         std::printf("\t-l, --limit\t\tLimit the number of elements to print [Default: 10].\n");
@@ -56,32 +58,24 @@ int main(int argc, char const* argv[]) {
     SparseTensor X = SparseTensor::load(fX, 1);
     fX.fclose();
 
-    std::printf("X = %s\n", X.to_string(!dense_format, limit).c_str());
+    std::printf("X = %s\n\n", X.to_string(!dense_format, limit).c_str());
 
-    for(size_t argi = 1; argi < args.size(); ++argi) {
-
-        if(X.nmodes < argi) {
-            break;
-        }
-        size_t mode = X.nmodes - argi;
-
-        CFile fU(args[argi], "r");
-        SparseTensor U = SparseTensor::load(fU, 1).to_fully_dense();
-        fU.fclose();
-
-        std::printf("\nU[%zu] = %s\n", argi, U.to_string(false, limit).c_str());
-
-        Timer timer(cpu);
-        timer.start();
-        SparseTensor Y = tensor_times_matrix(X, U, mode);
-        timer.stop();
-
-        timer.print_elapsed_time("TTM");
-        std::printf("Result: Y[%zu] = %s\n", argi, Y.to_string(!dense_format, limit).c_str());
-
-        X = std::move(Y);
-
+    if(args.size() < X.nmodes * 2 + 1) {
+        std::fprintf(stderr, "Error: Insufficient arguments\n");
+        return 1;
     }
+    std::unique_ptr<size_t[]> R(new size_t[X.nmodes]);
+    std::unique_ptr<size_t[]> dimorder(new size_t[X.nmodes]);
+    for(size_t i = 1; i <= X.nmodes; ++i) {
+        R[i - 1] = strtonum(std::strtoull, args[i], 0);
+        dimorder[i - 1] = strtonum(std::strtoull, args[i + X.nmodes], 0);
+    }
+
+    std::printf("Y = tucker_decomposition(X, [%s], [%s]);\n", array_to_string(R.get(), X.nmodes).c_str(), array_to_string(dimorder.get(), X.nmodes).c_str());
+
+    SparseTensor Y = tucker_decomposition(X, R.get(), dimorder.get());
+
+    std::printf("Y = %s\n", Y.to_string(!dense_format, limit).c_str());
 
     if(output.length() != 0) {
         CFile fY(output.c_str(), "w");

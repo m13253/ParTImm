@@ -16,9 +16,8 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <cstdio>
 #include <ParTI/argparse.hpp>
-#include <ParTI/error.hpp>
+#include <ParTI/cfile.hpp>
 #include <ParTI/sptensor.hpp>
 
 using namespace pti;
@@ -44,22 +43,15 @@ int main(int argc, char const* argv[]) {
         return 1;
     }
 
-    int io_result;
-
-    std::FILE* fi = std::fopen(args[0], "r");
-    ptiCheckOSError(!fi);
+    CFile fi(args[0], "r");
     SparseTensor tsr = SparseTensor::load(fi, 1);
-    io_result = std::fclose(fi);
-    ptiCheckOSError(io_result != 0);
+    fi.fclose();
 
     std::printf("tsr = %s\n", tsr.to_string(!dense_format, limit).c_str());
 
     if(args.size() == 2) {
-        std::FILE* fo = std::fopen(args[0], "w");
-        ptiCheckOSError(!fo);
+        CFile fo(args[0], "w");
         tsr.dump(fo, 1);
-        io_result = std::fclose(fo);
-        ptiCheckOSError(io_result != 0);
     }
 
     return 0;

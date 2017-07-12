@@ -24,9 +24,26 @@
 
 namespace pti {
 
-SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode);
-void set_semisparse_indices_by_sparse_ref(SparseTensor& dest, std::vector<size_t>& fiber_idx, SparseTensor& ref, size_t mode);
-SparseTensor tucker_decomposition(SparseTensor& X, size_t const R[], double tol, unsigned maxiters, size_t const dimorder[]);
+SparseTensor tensor_times_matrix(
+    SparseTensor& X,
+    SparseTensor& U,
+    size_t mode
+);
+
+void set_semisparse_indices_by_sparse_ref(
+    SparseTensor& dest,
+    std::vector<size_t>& fiber_idx,
+    SparseTensor& ref,
+    size_t mode
+);
+
+SparseTensor tucker_decomposition(
+    SparseTensor& X,
+    size_t const R[],
+    size_t const dimorder[],
+    double tol = 1.0e-4,
+    unsigned maxiters = 50
+);
 
 }
 

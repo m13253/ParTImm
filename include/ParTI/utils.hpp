@@ -19,7 +19,9 @@
 #ifndef PTI_UTILS_INCLUDED
 #define PTI_UTILS_INCLUDED
 
+#include <cstring>
 #include <string>
+#include <stdexcept>
 
 namespace pti {
 
@@ -39,6 +41,26 @@ inline std::string array_to_string(T const array[], size_t length, std::string c
         result += std::to_string(array[i]);
     }
     return result;
+}
+
+class StrToNumError : public std::runtime_error {
+public:
+    StrToNumError() : std::runtime_error("Invalid number format") {}
+};
+
+template <typename Fn, typename ...Args>
+static inline auto strtonum(Fn fn, const char *str, Args &&...args) -> decltype(fn(str, nullptr, std::forward<Args>(args)...)) {
+    if(str[0] != '\0') {
+        char *endptr;
+        auto result = fn(str, &endptr, std::forward<Args>(args)...);
+        if(endptr == &str[std::strlen(str)]) {
+            return result;
+        } else {
+            throw StrToNumError();
+        }
+    } else {
+        throw StrToNumError();
+    }
 }
 
 }

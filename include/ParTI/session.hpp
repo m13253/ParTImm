@@ -49,7 +49,7 @@ private:
 
 extern Session session;
 
-static const int cpu = 0;
+constexpr int cpu = 0;
 
 }
 
