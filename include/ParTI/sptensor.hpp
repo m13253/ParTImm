@@ -75,7 +75,6 @@ public:
     SparseTensor to_fully_dense();
 
     double norm();
-    void rand();
 
 };
 

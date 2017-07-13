@@ -24,7 +24,9 @@
 
 namespace pti {
 
-static std::vector<std::string> split_array(char const* s) {
+namespace {
+
+std::vector<std::string> split_array(char const* s) {
     std::vector<std::string> result;
     size_t last_pos = 0;
     while(char const* c = std::strchr(s + last_pos, ',')) {
@@ -34,6 +36,8 @@ static std::vector<std::string> split_array(char const* s) {
     }
     result.push_back(std::string(s, last_pos));
     return result;
+}
+
 }
 
 std::vector<char const*> parse_args(int argc, char const* argv[], ParamDefinition const defs[]) {
