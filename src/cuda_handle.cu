@@ -32,6 +32,20 @@ thread_local std::unordered_map<int, cublasHandle_t> cublasHandles;
 thread_local std::unordered_map<int, cusolverDnHandle_t> cusolverDnHandles;
 thread_local std::unordered_map<int, cusolverSpHandle_t> cusolverSpHandles;
 
+thread_local struct Destroyer {
+    ~Destroyer() {
+        for(auto const& i : cublasHandles) {
+            cublasDestroy(i.second);
+        }
+        for(auto const& i : cusolverDnHandles) {
+            cusolverDnDestroy(i.second);
+        }
+        for(auto const& i : cusolverSpHandles) {
+            cusolverSpDestroy(i.second);
+        }
+    }
+} destroyer;
+
 }
 
 void* CudaDevice::GetCublasHandle() {
