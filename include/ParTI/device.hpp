@@ -48,6 +48,10 @@ struct CudaDevice : public Device {
 
     CudaDevice(int cuda_device, int mem_node);
 
+    void* GetCusolverDnHandle();
+    void* GetCusolverSpHandle();
+    void* GetCublasHandle();
+
     int cuda_device;
 
 };

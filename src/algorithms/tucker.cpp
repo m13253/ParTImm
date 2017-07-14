@@ -23,6 +23,7 @@
 #include <ParTI/errcode.hpp>
 #include <ParTI/error.hpp>
 #include <ParTI/sptensor.hpp>
+#include <cusolverDn.h>
 
 namespace pti {
 
@@ -41,14 +42,28 @@ void uniform_random_fill_matrix(
     size_t nrows = mtx.shape(cpu)[0];
     size_t ncols = mtx.shape(cpu)[1];
     size_t stride = mtx.strides(cpu)[1];
-    mtx.reserve(1);
+    mtx.reserve(1, false);
 
     Scalar* values = mtx.values(cpu);
     for(size_t i = 0; i < nrows; ++i) {
         for(size_t j = 0; j < ncols; ++j) {
             values[i * stride + j] = distribution(generator);
         }
+        for(size_t j = ncols; j < stride; ++j) {
+            values[i * stride + j] = 0;
+        }
     }
+    for(size_t i = nrows * stride; i < mtx.chunk_size; ++i) {
+        values[i] = 0;
+    }
+}
+
+SparseTensor nvecs(
+    SparseTensor& t,
+    size_t        n,
+    size_t        r
+) {
+    return SparseTensor();
 }
 
 }
@@ -90,6 +105,7 @@ SparseTensor tucker_decomposition(
                         delete Utilde;
                     }
                     Utilde = Utilde_next;
+                    std::fprintf(stderr, "Utilde = %s\n", Utilde->to_string(true).c_str());
                 }
             }
             // U[n] = nvecs(Utilde, n, R[n]);

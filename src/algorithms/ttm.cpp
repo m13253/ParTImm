@@ -33,18 +33,19 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
 
     size_t nmodes = X.nmodes;
     size_t nspmodes = X.sparse_order.size();
-    size_t nrows = U.shape(cpu)[0];
-    size_t ncols = U.shape(cpu)[1];
-    size_t Ustride = U.strides(cpu)[1];
 
-    ptiCheckError(mode >= nmodes, ERR_SHAPE_MISMATCH, "shape mismatch");
+    ptiCheckError(mode >= nmodes, ERR_SHAPE_MISMATCH, "mode >= X.nmodes");
+    ptiCheckError(X.is_dense(cpu)[mode], ERR_UNKNOWN, "X.is_dense[mode] != false");
 
     ptiCheckError(U.nmodes != 2, ERR_SHAPE_MISMATCH, "U.nmodes != 2");
     ptiCheckError(U.dense_order(cpu)[0] != 0, ERR_SHAPE_MISMATCH, "U.dense_order[0] != 0");
     ptiCheckError(U.dense_order(cpu)[1] != 1, ERR_SHAPE_MISMATCH, "U.dense_order[1] != 1");
-    ptiCheckError(X.shape(cpu)[mode] != nrows, ERR_SHAPE_MISMATCH, "X.shape[mode] != U.nrows");
 
-    ptiCheckError(X.is_dense(cpu)[mode], ERR_UNKNOWN, "fixme: X.is_dense[mode] should be false");
+    size_t nrows = U.shape(cpu)[0];
+    size_t ncols = U.shape(cpu)[1];
+    size_t Ustride = U.strides(cpu)[1];
+
+    ptiCheckError(X.shape(cpu)[mode] != nrows, ERR_SHAPE_MISMATCH, "X.shape[mode] != U.nrows");
 
     std::unique_ptr<size_t[]> sort_order(new size_t [nspmodes]);
     for(size_t m = 0, i = 0; m < nspmodes; ++m) {
@@ -81,11 +82,11 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
     Scalar* Y_values = Y.values(cpu);
     Scalar* U_values = U.values(cpu);
 
-    /*
+    //*
     std::unique_ptr<size_t[]> idxY(new size_t[nmodes]);
     std::unique_ptr<size_t[]> idxX(new size_t[nmodes]);
     std::unique_ptr<size_t[]> idxU(new size_t[nmodes]);
-    */
+    //*/
 
     Timer timer(cpu);
     timer.start();
@@ -106,12 +107,12 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
             for(size_t c = 0; c < Y_num_subchunks; ++c) {
                 // Iterate elements from each subchunk in Y
                 for(size_t k = 0; k < Y_subchunk_size; ++k) {
-                    /*
+                    //*
                     Y.offset_to_indices(idxY.get(), i * Y.chunk_size + c * Y_subchunk_size + k);
                     X.offset_to_indices(idxX.get(), j * X.chunk_size + k);
                     U.offset_to_indices(idxU.get(), r * Ustride + c);
                     std::fprintf(stderr, "Y[%s] += X[%s] * U[%s]\n", array_to_string(idxY.get(), nmodes).c_str(), array_to_string(idxX.get(), nmodes).c_str(), array_to_string(idxU.get(), nmodes).c_str());
-                    */
+                    //*/
 
                     Y_values[i * Y.chunk_size + c * Y_subchunk_size + k] += X_values[j * X.chunk_size + k] * U_values[r * Ustride + c];
                 }

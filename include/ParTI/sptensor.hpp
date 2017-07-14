@@ -66,7 +66,7 @@ public:
 
     void append(size_t const coord[], Scalar const value[]);
     void append(size_t const coord[], Scalar value);
-    size_t reserve(size_t size);
+    size_t reserve(size_t size, bool initialize = true);
 
     void sort_index();
     void sort_index(size_t const sparse_order[]);
