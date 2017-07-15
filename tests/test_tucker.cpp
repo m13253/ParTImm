@@ -31,6 +31,7 @@ int main(int argc, char const* argv[]) {
     bool dense_format = false;
     size_t limit = 10;
     std::string output;
+    int device = 0;
     ParamDefinition defs[] = {
         { "-d",             PARAM_BOOL,   { &dense_format } },
         { "--dense-format", PARAM_BOOL,   { &dense_format } },
@@ -38,6 +39,7 @@ int main(int argc, char const* argv[]) {
         { "--limit",        PARAM_SIZET,  { &limit } },
         { "-o",             PARAM_STRING, { &output } },
         { "--output",       PARAM_STRING, { &output } },
+        { "--dev",          PARAM_INT,    { &device } },
         { ptiEndParamDefinition }
     };
     std::vector<char const*> args = parse_args(argc, argv, defs);
@@ -48,11 +50,18 @@ int main(int argc, char const* argv[]) {
         std::printf("\t-d, --dense-format\tPrint tensor in dense format instead of sparse format.\n");
         std::printf("\t-l, --limit\t\tLimit the number of elements to print [Default: 10].\n");
         std::printf("\t-o, --output\t\tWrite the result to a file\n");
+        std::printf("\t--dev\t\tCUDA device\n");
         std::printf("\n");
         return 1;
     }
 
     session.print_devices();
+    CudaDevice* cuda_device = dynamic_cast<CudaDevice*>(session.devices[device]);
+
+    if(cuda_device == nullptr) {
+        std::fprintf(stderr, "Please specify a CUDA computing device with --dev\n\n");
+        return 1;
+    }
 
     CFile fX(args[0], "r");
     SparseTensor X = SparseTensor::load(fX, 1);
@@ -73,7 +82,7 @@ int main(int argc, char const* argv[]) {
 
     std::printf("Y = tucker_decomposition(X, [%s], [%s]);\n", array_to_string(R.get(), X.nmodes).c_str(), array_to_string(dimorder.get(), X.nmodes).c_str());
 
-    SparseTensor Y = tucker_decomposition(X, R.get(), dimorder.get());
+    SparseTensor Y = tucker_decomposition(X, R.get(), dimorder.get(), *cuda_device);
 
     std::printf("Y = %s\n", Y.to_string(!dense_format, limit).c_str());
 

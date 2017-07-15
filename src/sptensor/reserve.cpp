@@ -26,7 +26,6 @@ size_t SparseTensor::reserve(size_t size, bool initialize) {
     size_t result = size;
 
     for(size_t m = 0; m < nmodes; ++m) {
-        indices[m].copy_to(cpu);
         if(indices[m].size() < size) { // Need reallocation
             indices[m].resize(cpu, size);
         } else {
@@ -34,7 +33,6 @@ size_t SparseTensor::reserve(size_t size, bool initialize) {
         }
     }
 
-    values.copy_to(cpu);
     if(values.size() < size * chunk_size) { // Need reallocation
         size_t old_size = values.size();
         values.resize(cpu, size * chunk_size);

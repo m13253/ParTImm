@@ -20,6 +20,7 @@
 #define PTI_ALGORITHM_INCLUDED
 
 #include <vector>
+#include <ParTI/device.hpp>
 #include <ParTI/sptensor.hpp>
 
 namespace pti {
@@ -41,6 +42,7 @@ SparseTensor tucker_decomposition(
     SparseTensor& X,
     size_t const R[],
     size_t const dimorder[],
+    CudaDevice& cuda_device,
     double tol = 1.0e-4,
     unsigned maxiters = 50
 );

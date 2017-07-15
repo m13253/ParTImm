@@ -24,10 +24,11 @@ namespace pti {
 enum ErrCode {
     ERR_NO_ERROR       = 0,
     ERR_UNKNOWN        = 1,
-    ERR_SHAPE_MISMATCH = 2,
-    ERR_VALUE_ERROR    = 3,
-    ERR_ZERO_DIVISION  = 4,
-    ERR_CUDA_LIBRARY   = 5,
+    ERR_BUILD_CONFIG   = 2,
+    ERR_SHAPE_MISMATCH = 3,
+    ERR_VALUE_ERROR    = 4,
+    ERR_ZERO_DIVISION  = 5,
+    ERR_CUDA_LIBRARY   = 6,
 };
 
 }

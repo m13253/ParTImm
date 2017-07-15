@@ -77,6 +77,8 @@ public:
         delete[] pointers;
     }
 
+    /// Allocate an element on `node` and set `last_node` to `node`.
+    /// The element are not initialized.
     void allocate(int node) {
         // If you need to call the constructor, allocate it on CPU, then
         //     new (get(CPU_node)) T();
@@ -89,6 +91,7 @@ public:
         }
     }
 
+    /// If `node` is not `last_node`, free memory allocated on `node`.
     void free(int node) {
         if(node != last_node && pointers[node]) {
             session.mem_nodes[node]->free(pointers[node]);
@@ -96,25 +99,27 @@ public:
         }
     }
 
+    /// If an element is initialized, copy the element on `last_node` to `node`, then set `last_node` to `node`.
     void copy_to(int node) {
-        if(node != last_node) {
+        if(node != last_node && last_node != -1) {
             allocate(node);
-            if(last_node != -1) {
-                session.mem_nodes[last_node]->memcpy_to(pointers[node], *session.mem_nodes[node], pointers[last_node], sizeof (T));
-            }
+            session.mem_nodes[last_node]->memcpy_to(pointers[node], *session.mem_nodes[node], pointers[last_node], sizeof (T));
             last_node = node;
         }
     }
 
+    /// Copy the pointer from `last_node` to `node`, then get pointer on `node`.
     T* operator() (int node) {
         copy_to(node);
         return pointers[node];
     }
 
+    /// Get pointer on `node`.
     T* ptr(int node) const {
         return pointers[node];
     }
 
+    /// Set `last_node` to `node`.
     void mark_dirty(int node) {
         last_node = node;
     }
@@ -182,6 +187,8 @@ public:
         delete[] sizes;
     }
 
+    /// Allocate `size` elements on `node` and set `last_node` to `node`.
+    /// Elements are not initialized.
     void allocate(int node, size_t size) {
         // If you need to call the constructor, allocate it on CPU, then
         //     new (get(CPU_node)) T [size]();
@@ -198,13 +205,15 @@ public:
         }
     }
 
+    /// Allocate `size` elements on `node` and copy as many elements as possible from `last_node`, then set `last_node` to `node`.
+    /// Newly allocated elements are not initialized.
     void resize(int node, size_t size) {
         if(!pointers[node]) {
             pointers[node] = reinterpret_cast<T*>(session.mem_nodes[node]->malloc(size * sizeof (T)));
             sizes[node] = size;
         } else {
             T* new_ptr = reinterpret_cast<T*>(session.mem_nodes[node]->malloc(size * sizeof (T)));
-            session.mem_nodes[node]->memcpy_from(new_ptr, pointers[node], *session.mem_nodes[node], (size < sizes[node] ? size : sizes[node]) * sizeof (T));
+            session.mem_nodes[last_node]->memcpy_to(new_ptr, *session.mem_nodes[node], pointers[last_node], (size < sizes[node] ? size : sizes[node]) * sizeof (T));
             session.mem_nodes[node]->free(pointers[node]);
             pointers[node] = new_ptr;
             sizes[node] = size;
@@ -214,6 +223,7 @@ public:
         }
     }
 
+    /// If `node` is not `last_node`, free memory allocated on `node`.
     void free(int node) {
         if(node != last_node && pointers[node]) {
             session.mem_nodes[node]->free(pointers[node]);
@@ -222,6 +232,7 @@ public:
         }
     }
 
+    /// Copy all elements on `last_node` to `node`, then set `last_node` to `node`.
     void copy_to(int node) {
         if(node != last_node) {
             if(last_node != -1 && sizes[last_node] != 0) {
@@ -236,23 +247,26 @@ public:
         }
     }
 
+    /// Copy the pointer from `last_node` to `node`, then get pointer on `node`.
     T* operator() (int node) {
         copy_to(node);
         return pointers[node];
     }
 
+    /// Get pointer on `node`.
     T* ptr(int node) const {
         return pointers[node];
     }
 
+    /// Get size on `last_node`.
     size_t size() const {
         return last_node != -1 ? sizes[last_node] : 0;
     }
 
+    /// Set `last_node` to `node`.
     void mark_dirty(int node) {
         last_node = node;
     }
-
 
 };
 
