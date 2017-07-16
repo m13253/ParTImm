@@ -102,7 +102,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
         // for each Y[i] corresponds to all X[j]
         for(size_t j = inz_begin; j < inz_end; ++j) {
             size_t r = X.indices[mode](cpu)[j];
-            // We will cut a chunk on Y into fiber * subchunks,
+            // We will cut a chunk on Y into several subchunks,
             // a subchunk in Y corresponds to a chunk in X
             for(size_t c = 0; c < Y_num_subchunks; ++c) {
                 // Iterate elements from each subchunk in Y
