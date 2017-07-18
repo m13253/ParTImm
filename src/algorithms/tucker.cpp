@@ -85,8 +85,8 @@ SparseTensor nvecs(
         std::memcpy(&tm.values(cpu)[row * tm_stride], &t.values(cpu)[i * t.chunk_size], t.chunk_size);
     }
 
-    size_t svd_m = tm_stride;
-    size_t svd_n = tm_shape[0];
+    size_t svd_m = tm_shape[0];
+    size_t svd_n = tm_stride;
     size_t svd_ld = tm_shape[1];
 
     int svd_work_size;
@@ -100,6 +100,8 @@ SparseTensor nvecs(
 
     MemBlock<Scalar[]> S;
     S.allocate(cuda_device.mem_node, std::min(svd_m, svd_n));
+    MemBlock<Scalar[]> U;
+    U.allocate(cuda_device.mem_node, svd_m);
     MemBlock<Scalar[]> VT;
     VT.allocate(cuda_device.mem_node, svd_n);
     MemBlock<Scalar[]> svd_work;
@@ -109,21 +111,16 @@ SparseTensor nvecs(
     MemBlock<int> svd_devInfo;
     svd_devInfo.allocate(cuda_device.mem_node);
 
-    size_t U_shape[2] = {svd_ld, svd_ld};
-    SparseTensor U(2, U_shape, full_dense);
-    U.reserve(1, false);
-    U.values.resize(cuda_device.mem_node, svd_m * svd_ld);
-
     status = cusolverDnSgesvd(
         handle,                                // handle
-        'N',                                   // jobu
-        'O',                                   // jobvt
+        'O',                                   // jobu
+        'N',                                   // jobvt
         svd_m,                                 // m
         svd_n,                                 // n
         tm.values(cuda_device.mem_node),       // A
         svd_ld,                                // lda
         S(cuda_device.mem_node),               // S
-        U.values(cuda_device.mem_node),        // U
+        U(cuda_device.mem_node),        // U
         svd_ld,                                // ldu
         VT(cuda_device.mem_node),              // VT
         svd_n,                                 // ldvt
@@ -140,9 +137,18 @@ SparseTensor nvecs(
     int svd_devInfo_value = *svd_devInfo(cpu);
     ptiCheckError(svd_devInfo_value != 0, ERR_CUDA_LIBRARY, ("devInfo = " + std::to_string(svd_devInfo_value)).c_str());
 
-    U.values.resize(cpu, svd_ld * svd_ld);
+    size_t result_shape[2] = {t.shape(cpu)[n], r};
+    SparseTensor result(2, result_shape, full_dense);
+    size_t result_stride = result.strides(cpu)[1];
+    result.reserve(1);
 
-    return U;
+    for(size_t i = 0; i < t.shape(cpu)[n]; ++i) {
+        for(size_t j = 0; j < r; ++j) {
+            result.values(cpu)[i * result_stride + j] = tm.values(cpu)[i * tm_stride + j];
+        }
+    }
+
+    return result;
 }
 
 }
