@@ -120,7 +120,7 @@ SparseTensor nvecs(
         tm.values(cuda_device.mem_node),       // A
         svd_ld,                                // lda
         S(cuda_device.mem_node),               // S
-        U(cuda_device.mem_node),        // U
+        U(cuda_device.mem_node),               // U
         svd_ld,                                // ldu
         VT(cuda_device.mem_node),              // VT
         svd_n,                                 // ldvt
@@ -161,7 +161,7 @@ SparseTensor tucker_decomposition(
     double          tol,
     unsigned        maxiters
 ) {
-    ptiCheckError(X.dense_order.size() == 0, ERR_SHAPE_MISMATCH, "X should be fully sparse");
+    ptiCheckError(X.dense_order.size() != 0, ERR_SHAPE_MISMATCH, "X should be fully sparse");
 
     size_t N = X.nmodes;
     double normX = X.norm();
