@@ -6,7 +6,7 @@
 -DUSE_CUDA=OFF
 -DCUDA_HOST_COMPILER=/usr/bin/gcc-5
 
--DUSE_OPENBLAS=OFF
+-DUSE_OpenBLAS=OFF
 
 -DUSE_MAGMA=OFF
 -DMAGMA_LIBRARIES=/usr/local/lib/libmagma.a
