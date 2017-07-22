@@ -74,15 +74,40 @@ SparseTensor nvecs(
     cusolverDnHandle_t handle = (cusolverDnHandle_t) cuda_device.GetCusolverDnHandle();
     cusolverStatus_t status;
 
-    size_t tm_shape[2] = {t.shape(cpu)[n], t.chunk_size};
+    bool tm_trans;
+    size_t tm_m; // rows
+    size_t tm_n; // colums
+    if(t.shape(cpu)[n] >= t.chunk_size) {
+        tm_trans = false;
+        tm_m = t.shape(cpu)[n];
+        tm_n = t.chunk_size;
+    } else {
+        tm_trans = true;
+        tm_m = t.chunk_size;
+        tm_n = t.shape(cpu)[n];
+    }
+
+    // cuSOLVER use FORTRAN style, swap them
+    size_t tm_shape[2] = {tm_n, tm_m};
     bool full_dense[2] = {true, true};
     SparseTensor tm(2, tm_shape, full_dense);
     size_t tm_stride = tm.strides(cpu)[1];
     tm.reserve(1);
 
-    for(size_t i = 0; i < t.shape(cpu)[n]; ++i) {
-        size_t row = t.indices[n](cpu)[i];
-        std::memcpy(&tm.values(cpu)[row * tm_stride], &t.values(cpu)[i * t.chunk_size], t.chunk_size);
+    if(!tm_trans) {
+        for(size_t i = 0; i < tm_m; ++i) {
+            size_t row = t.indices[n](cpu)[i];
+            for(size_t j = 0; j < tm_n; ++j) {
+                tm.values(cpu)[j * tm_stride + row] = t.values(cpu)[i * tm.chunk_size + j];
+            }
+        }
+    } else {
+        for(size_t i = 0; i < tm_n; ++i) {
+            size_t row = t.indices[n](cpu)[i];
+            for(size_t j = 0; j < tm_m; ++j) {
+                tm.values(cpu)[row * tm_stride + j] = t.values(cpu)[i * tm.chunk_size + j];
+            }
+        }
     }
 
     size_t svd_m = tm_shape[0];
