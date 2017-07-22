@@ -5,8 +5,8 @@ option(BUILD_STATIC "Build static library" ON)
 option(BUILD_SHARED "Build shared library" ON)
 
 option(USE_CUDA "Use NVIDIA CUDA library" ON)
-option(USE_OpenBLAS "Use OpenBLAS library" ON)
-option(USE_MAGMA "Use MAGMA library" ON)
+option(USE_OpenBLAS "Use OpenBLAS library" OFF)
+option(USE_MAGMA "Use MAGMA library" OFF)
 option(USE_MKL "Use Intel MKL library" OFF)
 
 if(USE_CUDA)

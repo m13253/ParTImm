@@ -27,8 +27,12 @@
 #include <ParTI/error.hpp>
 #include <ParTI/memblock.hpp>
 #include <ParTI/sptensor.hpp>
+#include <ParTI/utils.hpp>
+
+#ifdef PARTI_USE_CUDA
 #include <cuda_runtime_api.h>
 #include <cusolverDn.h>
+#endif
 
 namespace pti {
 
@@ -69,6 +73,9 @@ SparseTensor nvecs(
     size_t        r,
     CudaDevice&   cuda_device
 ) {
+
+#ifdef PARTI_USE_CUDA
+
     ptiCheckError(sizeof (Scalar) != sizeof (float), ERR_BUILD_CONFIG, "Scalar != float");
     ptiCheckError(t.is_dense(cpu)[n] != false, ERR_SHAPE_MISMATCH, "t.is_dense[n] != false");
 
@@ -188,6 +195,17 @@ SparseTensor nvecs(
     }
 
     return result;
+
+#else
+
+    unused_param(t);
+    unused_param(n);
+    unused_param(r);
+    unused_param(cuda_device);
+    ptiCheckError(true, ERR_BUILD_CONFIG, "CUDA not enabled");
+
+#endif
+
 }
 
 }

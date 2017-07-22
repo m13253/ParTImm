@@ -26,6 +26,10 @@
 namespace pti {
 
 template <typename T>
+inline void unused_param(T&&) {
+}
+
+template <typename T>
 inline T ceil_div(T const num, T const deno) {
     return num ? (num - 1) / deno + 1 : 0;
 }

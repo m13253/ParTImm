@@ -1,2 +1,3 @@
+-DPARTI_USE_CUDA
 -Iinclude
 -I/usr/local/cuda/include
