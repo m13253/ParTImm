@@ -144,8 +144,8 @@ SparseTensor nvecs(
 
     status = cusolverDnSgesvd(
         handle,                                // handle
-        'O',                                   // jobu
-        'N',                                   // jobvt
+        !tm_trans ? 'O' : 'N',                 // jobu
+        !tm_trans ? 'N' : 'O',                 // jobvt
         svd_m,                                 // m
         svd_n,                                 // n
         tm.values(cuda_device.mem_node),       // A
@@ -173,9 +173,17 @@ SparseTensor nvecs(
     size_t result_stride = result.strides(cpu)[1];
     result.reserve(1);
 
-    for(size_t i = 0; i < t.shape(cpu)[n]; ++i) {
-        for(size_t j = 0; j < r; ++j) {
-            result.values(cpu)[i * result_stride + j] = tm.values(cpu)[i * tm_stride + j];
+    if(!tm_trans) {
+        for(size_t i = 0; i < t.shape(cpu)[n]; ++i) {
+            for(size_t j = 0; j < r; ++j) {
+                result.values(cpu)[i * result_stride + j] = tm.values(cpu)[j * tm_stride + i];
+            }
+        }
+    } else {
+        for(size_t i = 0; i < t.shape(cpu)[n]; ++i) {
+            for(size_t j = 0; j < r; ++j) {
+                result.values(cpu)[i * result_stride + j] = tm.values(cpu)[j * tm_stride + i];
+            }
         }
     }
 
