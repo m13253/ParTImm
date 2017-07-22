@@ -17,6 +17,7 @@
 */
 
 #include <ParTI/algorithm.hpp>
+#include <cassert>
 #include <cmath>
 #include <cstring>
 #include <memory>
@@ -110,8 +111,8 @@ SparseTensor nvecs(
         }
     }
 
-    size_t svd_m = tm_shape[0];
-    size_t svd_n = tm_stride;
+    size_t svd_m = tm_stride;
+    size_t svd_n = tm_shape[0];
     size_t svd_ld = tm_shape[1];
 
     int svd_work_size;
@@ -136,6 +137,11 @@ SparseTensor nvecs(
     MemBlock<int> svd_devInfo;
     svd_devInfo.allocate(cuda_device.mem_node);
 
+    assert(svd_m >= svd_n);
+    assert(svd_m >= 1);
+    assert(svd_ld >= svd_m);
+    assert(svd_n >= 1);
+
     status = cusolverDnSgesvd(
         handle,                                // handle
         'O',                                   // jobu
@@ -143,7 +149,7 @@ SparseTensor nvecs(
         svd_m,                                 // m
         svd_n,                                 // n
         tm.values(cuda_device.mem_node),       // A
-        svd_ld,                                // lda
+        svd_ld,                                // lda (lda >= max(1, m))
         S(cuda_device.mem_node),               // S
         U(cuda_device.mem_node),               // U
         svd_ld,                                // ldu
