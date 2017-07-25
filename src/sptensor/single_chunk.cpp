@@ -22,7 +22,7 @@
 
 namespace pti {
 
-void SparseTensor::single_chunk(bool initialize) {
+void SparseTensor::init_single_chunk(bool initialize) {
     for(size_t m = 0; m < nmodes; ++m) {
         if(indices[m].size() != 1) { // Need reallocation
             indices[m].resize(cpu, 1);

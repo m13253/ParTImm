@@ -36,7 +36,7 @@ SparseTensor SparseTensor::to_fully_dense() {
     std::memcpy(result_dense_order, sparse_order(cpu), sparse_order.size() * sizeof (size_t));
     std::memcpy(result_dense_order + sparse_order.size(), dense_order(cpu), dense_order.size() * sizeof (size_t));
 
-    result.single_chunk();
+    result.init_single_chunk();
 
     std::unique_ptr<size_t[]> coord(new size_t [nmodes]);
     for(size_t i = 0; i < num_chunks; ++i) {

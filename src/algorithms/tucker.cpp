@@ -48,7 +48,7 @@ void uniform_random_fill_matrix(
     std::default_random_engine generator;
     std::uniform_real_distribution<Scalar> distribution(-1.0, 1.0);
 
-    mtx.single_chunk(false);
+    mtx.init_single_chunk(false);
     size_t nrows = mtx.shape(cpu)[0];
     size_t ncols = mtx.shape(cpu)[1];
     size_t stride = mtx.strides(cpu)[1];
@@ -99,7 +99,7 @@ SparseTensor nvecs(
     size_t tm_shape[2] = {tm_n, tm_m};
     bool full_dense[2] = {true, true};
     SparseTensor tm(2, tm_shape, full_dense);
-    tm.single_chunk();
+    tm.init_single_chunk();
     size_t tm_stride = tm.strides(cpu)[1];
 
     if(!tm_trans) {
@@ -185,7 +185,7 @@ SparseTensor nvecs(
 
     size_t result_shape[2] = {t.shape(cpu)[n], r};
     SparseTensor result(2, result_shape, full_dense);
-    result.single_chunk();
+    result.init_single_chunk();
     size_t result_stride = result.strides(cpu)[1];
 
     if(!tm_trans) {
