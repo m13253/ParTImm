@@ -22,28 +22,22 @@
 
 namespace pti {
 
-size_t SparseTensor::reserve(size_t size, bool initialize) {
-    size_t result = size;
-
+void SparseTensor::single_chunk(bool initialize) {
     for(size_t m = 0; m < nmodes; ++m) {
-        if(indices[m].size() < size) { // Need reallocation
-            indices[m].resize(cpu, size);
-        } else {
-            result = indices[m].size();
+        if(indices[m].size() != 1) { // Need reallocation
+            indices[m].resize(cpu, 1);
         }
+        indices[m](cpu)[0] = 0;
     }
 
-    if(values.size() < size * chunk_size) { // Need reallocation
-        size_t old_size = values.size();
-        values.resize(cpu, size * chunk_size);
+    if(values.size() != chunk_size) { // Need reallocation
+        values.resize(cpu, chunk_size);
         if(initialize) {
-            std::memset(&values(cpu)[old_size], 0, (size * chunk_size - old_size) * sizeof (Scalar));
+            std::memset(values(cpu), 0, chunk_size * sizeof (Scalar));
         }
-    } else if(chunk_size != 0) {
-        result = values.size() / chunk_size;
     }
 
-    return result;
+    num_chunks = 1;
 }
 
 }

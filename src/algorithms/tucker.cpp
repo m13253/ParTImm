@@ -48,10 +48,10 @@ void uniform_random_fill_matrix(
     std::default_random_engine generator;
     std::uniform_real_distribution<Scalar> distribution(-1.0, 1.0);
 
+    mtx.single_chunk(false);
     size_t nrows = mtx.shape(cpu)[0];
     size_t ncols = mtx.shape(cpu)[1];
     size_t stride = mtx.strides(cpu)[1];
-    mtx.reserve(1, false);
 
     Scalar* values = mtx.values(cpu);
     for(size_t i = 0; i < nrows; ++i) {
@@ -99,21 +99,29 @@ SparseTensor nvecs(
     size_t tm_shape[2] = {tm_n, tm_m};
     bool full_dense[2] = {true, true};
     SparseTensor tm(2, tm_shape, full_dense);
+    tm.single_chunk();
     size_t tm_stride = tm.strides(cpu)[1];
-    tm.reserve(1);
 
     if(!tm_trans) {
         for(size_t i = 0; i < tm_m; ++i) {
             size_t row = t.indices[n](cpu)[i];
             for(size_t j = 0; j < tm_n; ++j) {
-                tm.values(cpu)[j * tm_stride + row] = t.values(cpu)[i * tm.chunk_size + j];
+                assert(j < tm_shape[0]);
+                assert(row < tm_shape[1]);
+                assert(i < t.num_chunks);
+                assert(j < t.chunk_size);
+                tm.values(cpu)[j * tm_stride + row] = t.values(cpu)[i * t.chunk_size + j];
             }
         }
     } else {
         for(size_t i = 0; i < tm_n; ++i) {
             size_t row = t.indices[n](cpu)[i];
             for(size_t j = 0; j < tm_m; ++j) {
-                tm.values(cpu)[row * tm_stride + j] = t.values(cpu)[i * tm.chunk_size + j];
+                assert(row < tm_shape[0]);
+                assert(j < tm_shape[1]);
+                assert(i < t.num_chunks);
+                assert(j < t.chunk_size);
+                tm.values(cpu)[row * tm_stride + j] = t.values(cpu)[i * t.chunk_size + j];
             }
         }
     }
@@ -177,8 +185,8 @@ SparseTensor nvecs(
 
     size_t result_shape[2] = {t.shape(cpu)[n], r};
     SparseTensor result(2, result_shape, full_dense);
+    result.single_chunk();
     size_t result_stride = result.strides(cpu)[1];
-    result.reserve(1);
 
     if(!tm_trans) {
         for(size_t i = 0; i < t.shape(cpu)[n]; ++i) {
@@ -236,11 +244,11 @@ SparseTensor tucker_decomposition(
     SparseTensor core;
 
     double fit = 0;
+    SparseTensor Utilde_next;
     for(unsigned iter = 0; iter < maxiters; ++iter) {
         double fitold = fit;
 
         SparseTensor* Utilde = &X;
-        SparseTensor Utilde_next;
         for(size_t ni = 0; ni < N; ++ni) {
             size_t n = dimorder[ni];
             Utilde = &X;
