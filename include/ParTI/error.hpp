@@ -23,7 +23,11 @@
 #include <string>
 
 #ifndef unlikely
+#ifndef _MSC_VER
 #define unlikely(x) __builtin_expect(!!(x), 0)
+#else
+#define unlikely(x) (x)
+#endif
 #endif
 
 namespace pti {

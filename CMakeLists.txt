@@ -44,13 +44,23 @@ if(USE_MKL)
     link_libraries(${MKL_LIBRARIES})
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -fopenmp")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -fopenmp")
+if(NOT "${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -fopenmp")
+else()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /EHsc /W2")
+endif()
+if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -fopenmp")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc /W2")
+endif()
 
 # A bug in FindCUDA module forces us to put "include_directories" before "cuda_add_library".
 # So we cannot use "target_include_directories" for target-wise include tracking.
 include_directories("include")
-link_libraries("m")
+if(NOT "${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
+    link_libraries("m")
+endif()
 
 if(USE_CUDA)
     file(GLOB_RECURSE PARTI_SRC RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "src/*.cpp" "src/*.cu" "src/*.hpp" "include/*.hpp")

@@ -18,10 +18,16 @@
 
 #include <ParTI/timer.hpp>
 #include <cstdio>
-#include <time.h>
 #include <ParTI/device.hpp>
+#include <ParTI/errcode.hpp>
 #include <ParTI/error.hpp>
 #include <ParTI/session.hpp>
+
+#ifndef _WIN32
+#include <time.h>
+#else
+#include <windows.h>
+#endif
 
 namespace pti {
 
@@ -53,7 +59,14 @@ void Timer::start() {
         ptiCheckCUDAError(true);
 #endif
     } else {
+#ifndef _WIN32
         clock_gettime(CLOCK_MONOTONIC, &start_timespec);
+#else
+        LARGE_INTEGER performance_counter;
+        BOOL result = QueryPerformanceCounter(&performance_counter);
+        ptiCheckError(!result, ERR_UNKNOWN, "No high resolution timer available on this system");
+        start_perfcount = performance_counter.QuadPart;
+#endif
     }
 }
 
@@ -65,7 +78,14 @@ void Timer::stop() {
         ptiCheckCUDAError(true);
 #endif
     } else {
+#ifndef _WIN32
         clock_gettime(CLOCK_MONOTONIC, &stop_timespec);
+#else
+        LARGE_INTEGER performance_counter;
+        BOOL result = QueryPerformanceCounter(&performance_counter);
+        ptiCheckError(!result, ERR_UNKNOWN, "No high resolution timer available on this system");
+        stop_perfcount = performance_counter.QuadPart;
+#endif
     }
 }
 
@@ -77,8 +97,15 @@ double Timer::elapsed_time() const {
         ptiCheckCUDAError(true);
 #endif
     } else {
+#ifndef _WIN32
         return stop_timespec.tv_sec - start_timespec.tv_sec
             + (stop_timespec.tv_nsec - start_timespec.tv_nsec) * 1e-9;
+#else
+        LARGE_INTEGER performance_frequency;
+        BOOL result = QueryPerformanceFrequency(&performance_frequency);
+        ptiCheckError(!result || performance_frequency.QuadPart == 0, ERR_UNKNOWN, "No high resolution timer available on this system");
+        return double(stop_perfcount - start_perfcount) / performance_frequency.QuadPart;
+#endif
     }
 }
 

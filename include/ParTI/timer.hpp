@@ -41,8 +41,13 @@ private:
 
     int device;
     CudaDevice* cuda_dev;
+#ifndef _WIN32
     struct timespec start_timespec;
     struct timespec stop_timespec;
+#else
+    int64_t start_perfcount;
+    int64_t stop_perfcount;
+#endif
     void* cuda_start_event;
     void* cuda_stop_event;
 
