@@ -81,6 +81,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
     Scalar* X_values = X.values(cpu);
     Scalar* Y_values = Y.values(cpu);
     Scalar* U_values = U.values(cpu);
+    size_t* X_indices_m = X.indices[mode](cpu);
 
     /*
     std::unique_ptr<size_t[]> idxY(new size_t[nmodes]);
@@ -101,7 +102,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
         // j is chunk-level on X,
         // for each Y[i] corresponds to all X[j]
         for(size_t j = inz_begin; j < inz_end; ++j) {
-            size_t r = X.indices[mode](cpu)[j];
+            size_t r = X_indices_m[j];
             // We will cut a chunk on Y into several subchunks,
             // a subchunk in Y corresponds to a chunk in X
             for(size_t c = 0; c < Y_num_subchunks; ++c) {
