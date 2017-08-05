@@ -103,15 +103,12 @@ SparseTensor tensor_times_matrix_omp(SparseTensor& X, SparseTensor& U, size_t mo
         size_t inz_end = fiberidx[i + 1];
         // j is chunk-level on X,
         // for each Y[i] corresponds to all X[j]
-        #pragma omp parallel
         for(size_t j = inz_begin; j < inz_end; ++j) {
             size_t r = X_indices_m[j];
             // We will cut a chunk on Y into several subchunks,
             // a subchunk in Y corresponds to a chunk in X
-            #pragma omp parallel
             for(size_t c = 0; c < Y_num_subchunks; ++c) {
                 // Iterate elements from each subchunk in Y
-                #pragma omp parallel
                 for(size_t k = 0; k < Y_subchunk_size; ++k) {
                     /*
                     Y.offset_to_indices(idxY.get(), i * Y.chunk_size + c * Y_subchunk_size + k);
