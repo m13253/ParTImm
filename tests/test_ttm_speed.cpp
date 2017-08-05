@@ -64,7 +64,16 @@ int main(int argc, char const* argv[]) {
         Y = tensor_times_matrix(X, U, mode);
         timer.stop();
         if(iter != 0) {
-            timer.print_elapsed_time("TTM");
+            timer.print_elapsed_time("CPU TTM");
+        }
+    }
+
+    for(size_t iter = 0; iter <= iterations; ++iter) {
+        timer.start();
+        Y = tensor_times_matrix_omp(X, U, mode);
+        timer.stop();
+        if(iter != 0) {
+            timer.print_elapsed_time("OMP TTM");
         }
     }
 

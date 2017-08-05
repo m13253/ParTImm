@@ -19,6 +19,7 @@
 #include <ParTI/session.hpp>
 #include <cstdio>
 #include <thread>
+#include <omp.h>
 #include <ParTI/device.hpp>
 #include <ParTI/memnode.hpp>
 
@@ -49,6 +50,7 @@ void Session::detect_devices() {
         CpuDevice* cpu_device = new CpuDevice(i, cpu_mem_node_id);
         add_device(cpu_device);
     }
+    omp_set_num_threads(num_cpu_cores);
 #ifdef PARTI_USE_CUDA
     detect_cuda_devices();
 #endif

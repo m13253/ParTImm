@@ -31,6 +31,12 @@ SparseTensor tensor_times_matrix(
     size_t mode
 );
 
+SparseTensor tensor_times_matrix_omp(
+    SparseTensor& X,
+    SparseTensor& U,
+    size_t mode
+);
+
 void set_semisparse_indices_by_sparse_ref(
     SparseTensor& dest,
     std::vector<size_t>& fiber_idx,
