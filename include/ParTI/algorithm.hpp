@@ -44,6 +44,14 @@ void set_semisparse_indices_by_sparse_ref(
     size_t mode
 );
 
+void svd(
+    SparseTensor& U,
+    SparseTensor& S,
+    SparseTensor& V,
+    SparseTensor& X,
+    CudaDevice&   cuda_device
+);
+
 SparseTensor tucker_decomposition(
     SparseTensor& X,
     size_t const R[],
