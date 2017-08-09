@@ -26,13 +26,34 @@
 
 namespace pti {
 
-struct Tensor : public BaseTensor {
+struct SparseTensor;
 
-    MemBlock<size_t[]> strides;
+struct Tensor : public BaseTensor {
 
     MemBlock<size_t[]> storage_order;
 
+    MemBlock<size_t[]> strides;
+
+    size_t chunk_size; // product of strides
+
     MemBlock<Scalar[]> values;
+
+public:
+
+    explicit Tensor();
+    explicit Tensor(size_t nmodes, size_t const shape[], bool initialize = true);
+    Tensor(Tensor&& other);
+    Tensor& operator= (Tensor&& other);
+    ~Tensor();
+
+    explicit Tensor(SparseTensor&& other);
+    Tensor& operator= (SparseTensor&& other);
+
+    Tensor& reset(size_t nmodes, size_t const shape[], bool initialize = true);
+
+    bool offset_to_indices(size_t indices[], size_t offset);
+
+    std::string to_string(size_t limit = 0);
 
 };
 

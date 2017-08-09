@@ -25,12 +25,8 @@
 #include <ParTI/timer.hpp>
 #include <ParTI/session.hpp>
 #include <ParTI/sptensor.hpp>
+#include <ParTI/tensor.hpp>
 #include <ParTI/utils.hpp>
-
-#ifdef PARTI_USE_CUDA
-#include <cuda_runtime_api.h>
-#include <cusolverDn.h>
-#endif
 
 using namespace pti;
 
@@ -63,16 +59,17 @@ int main(int argc, char const* argv[]) {
     }
 
     CFile fX(args[0], "r");
-    SparseTensor X = SparseTensor::load(fX, 1).to_fully_dense();
+    Tensor X = Tensor(SparseTensor::load(fX, 1).to_fully_dense());
     fX.fclose();
 
-    X.dense_order(cpu)[0] = 1;
-    X.dense_order(cpu)[1] = 0;
+    std::printf("X = %s\n\n", X.to_string(limit).c_str());
 
-    std::printf("X = %s\n\n", X.to_string(false, limit).c_str());
+    Tensor U, S, V;
+    svd(U, false, S, V, false, X, *cuda_device);
 
-    SparseTensor U, S, V;
-    svd(U, S, V, X, *cuda_device);
+    std::printf("U = %s\n\n", U.to_string(limit).c_str());
+    std::printf("S = %s\n\n", S.to_string(limit).c_str());
+    std::printf("V = %s\n\n", V.to_string(limit).c_str());
 
     return 0;
 }

@@ -25,13 +25,13 @@ namespace pti {
 void SparseTensor::init_single_chunk(bool initialize) {
     for(size_t m = 0; m < nmodes; ++m) {
         if(indices[m].size() != 1) { // Need reallocation
-            indices[m].resize(cpu, 1);
+            indices[m].allocate(cpu, 1);
         }
         indices[m](cpu)[0] = 0;
     }
 
     if(values.size() != chunk_size) { // Need reallocation
-        values.resize(cpu, chunk_size);
+        values.allocate(cpu, chunk_size);
         if(initialize) {
             std::memset(values(cpu), 0, chunk_size * sizeof (Scalar));
         }

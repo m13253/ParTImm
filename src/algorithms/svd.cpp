@@ -26,11 +26,12 @@
 #include <ParTI/errcode.hpp>
 #include <ParTI/error.hpp>
 #include <ParTI/memblock.hpp>
-#include <ParTI/sptensor.hpp>
+#include <ParTI/tensor.hpp>
 #include <ParTI/utils.hpp>
 
 #ifdef PARTI_USE_CUDA
 #include <cuda_runtime_api.h>
+#include <cublas.h>
 #include <cusolverDn.h>
 #endif
 
@@ -38,67 +39,140 @@ namespace pti {
 
 namespace {
 
-bool is_matrix(
-    SparseTensor& X,
-    bool fortran_style = false
-) {
-    if(X.nmodes != 2) {
-        return false;
-    }
-    if(X.num_chunks != 1) {
-        return false;
-    }
-    size_t const* dense_order = X.dense_order(cpu);
-    if(fortran_style) {
-        if(dense_order[0] != 1 || dense_order[1] != 0) {
-            return false;
-        }
-    } else {
-        if(dense_order[0] != 0 || dense_order[1] != 1) {
-            return false;
-        }
-    }
-    return true;
-}
-
 void init_matrix(
-    SparseTensor& X,
+    Tensor& X,
     size_t nrows,
     size_t ncols,
     bool fortran_style = true,
     bool initialize = true
 ) {
     size_t shape[2] = { nrows, ncols };
-    bool const is_dense[2] = { true, true };
-    X.reset(2, shape, is_dense);
-    X.init_single_chunk(initialize);
-    size_t* dense_order = X.dense_order(cpu);
+    X.reset(2, shape, initialize);
+    size_t* storage_order = X.storage_order(cpu);
     if(fortran_style) {
-        dense_order[0] = 1;
-        dense_order[1] = 0;
+        storage_order[0] = 1;
+        storage_order[1] = 0;
     }
 }
 
-}
-
-void svd(
-    SparseTensor& U,
-    SparseTensor& S,
-    SparseTensor& V,
-    SparseTensor& X,
-    CudaDevice&   cuda_device
+void transpose_matrix(
+    Tensor& X,
+    bool do_transpose,
+    bool want_fortran_style,
+    CudaDevice& cuda_device
 ) {
 
 #ifdef PARTI_USE_CUDA
 
     ptiCheckError(sizeof (Scalar) != sizeof (float), ERR_BUILD_CONFIG, "Scalar != float");
 
-    ptiCheckError(!is_matrix(X, true), ERR_SHAPE_MISMATCH, "X should be fortran style matrix");
+    ptiCheckError(X.nmodes != 2, ERR_SHAPE_MISMATCH, "X.nmodes != 2");
+
+    size_t* storage_order = X.storage_order(cpu);
+    bool currently_fortran_style;
+    if(storage_order[0] == 0 && storage_order[1] == 1) {
+        currently_fortran_style = false;
+    } else if(storage_order[0] == 1 && storage_order[1] == 0) {
+        currently_fortran_style = true;
+    } else {
+        ptiCheckError(true, ERR_SHAPE_MISMATCH, "X is not a matrix");
+    }
+
+    size_t* shape = X.shape(cpu);
+    size_t* strides = X.strides(cpu);
+
+    if(do_transpose != (currently_fortran_style != want_fortran_style)) {
+        cublasHandle_t handle = (cublasHandle_t) cuda_device.GetCublasHandle();
+        cublasStatus_t status;
+
+        size_t m = shape[storage_order[0]]; // Result rows
+        size_t n = shape[storage_order[1]]; // Result cols
+        size_t ldm = ceil_div<size_t>(m, 8) * 8;
+        size_t ldn = strides[storage_order[1]];
+
+        MemBlock<float[]> result_matrix;
+        result_matrix.allocate(cuda_device.mem_node, n * ldm);
+
+        status = cublasSetPointerMode(
+            handle,
+            CUBLAS_POINTER_MODE_HOST
+        );
+        ptiCheckError(status, ERR_CUDA_LIBRARY, "cuBLAS error");
+
+        float const alpha = 1;
+        float const beta = 0;
+        status = cublasSgeam(
+            handle,                                 // handle
+            CUBLAS_OP_T,                            // transa
+            CUBLAS_OP_N,                            // transb
+            m,                                      // m
+            n,                                      // n
+            &alpha,                                 // alpha
+            X.values(cuda_device.mem_node),         // A
+            ldn,                                    // lda
+            &beta,                                  // beta
+            nullptr,                                // B
+            ldm,                                    // ldb
+            result_matrix(cuda_device.mem_node),    // C
+            ldm                                     // ldc
+        );
+        ptiCheckError(status, ERR_CUDA_LIBRARY, "cuBLAS error");
+
+        cudaSetDevice(cuda_device.cuda_device);
+        cudaDeviceSynchronize();
+
+        X.values = std::move(result_matrix);
+    }
+
+    if(do_transpose) {
+        std::swap(shape[0], shape[1]);
+        std::swap(strides[0], strides[1]);
+    }
+
+    if(want_fortran_style) {
+        storage_order[0] = 1;
+        storage_order[1] = 0;
+    } else {
+        storage_order[0] = 0;
+        storage_order[1] = 1;
+    }
+
+#else
+
+    unused_param(X);
+    unused_param(do_transpose);
+    unused_param(want_fortran_style);
+    unused_param(cuda_device);
+    ptiCheckError(true, ERR_BUILD_CONFIG, "CUDA not enabled");
+
+#endif
+
+}
+
+}
+
+void svd(
+    Tensor& U,
+    bool U_want_transpose,
+    Tensor& S,
+    Tensor& V,
+    bool V_want_transpose,
+    Tensor& X,
+    CudaDevice& cuda_device
+) {
+
+#ifdef PARTI_USE_CUDA
+
+    ptiCheckError(sizeof (Scalar) != sizeof (float), ERR_BUILD_CONFIG, "Scalar != float");
 
     cusolverDnHandle_t handle = (cusolverDnHandle_t) cuda_device.GetCusolverDnHandle();
     cusolverStatus_t status;
 
     size_t const* X_shape = X.shape(cpu);
+
+    bool X_transposed = X_shape[0] < X_shape[1];
+    transpose_matrix(X, X_transposed, true, cuda_device);
+
     size_t svd_m = X_shape[0];
     size_t svd_n = X_shape[1];
     size_t svd_lda = X.strides(cpu)[0];
@@ -119,9 +193,9 @@ void svd(
 
     init_matrix(U, svd_m, svd_m, true, true);
     init_matrix(S, 1, svd_n, false, true);
-    init_matrix(V, svd_n, svd_n, false, true);
+    init_matrix(V, svd_n, svd_n, true, true);
     size_t svd_ldu = U.strides(cpu)[0];
-    size_t svd_ldvt = V.strides(cpu)[1];
+    size_t svd_ldvt = V.strides(cpu)[0];
 
     assert(svd_ldu >= svd_m);
     assert(svd_ldu >= 1);
@@ -161,11 +235,21 @@ void svd(
     int svd_devInfo_value = *svd_devInfo(cpu);
     ptiCheckError(svd_devInfo_value != 0, ERR_CUDA_LIBRARY, ("devInfo = " + std::to_string(svd_devInfo_value)).c_str());
 
+    transpose_matrix(U, U_want_transpose != X_transposed, false, cuda_device);
+    transpose_matrix(V, V_want_transpose == X_transposed, false, cuda_device);
+
+    if(X_transposed) {
+        std::swap(U, V);
+    }
+
 #else
 
-    unused_param(t);
-    unused_param(n);
-    unused_param(r);
+    unused_param(U);
+    unused_param(U_want_transpose);
+    unused_param(S);
+    unused_param(V);
+    unused_param(V_want_transpose);
+    unused_param(X);
     unused_param(cuda_device);
     ptiCheckError(true, ERR_BUILD_CONFIG, "CUDA not enabled");
 

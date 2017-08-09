@@ -32,8 +32,17 @@ thread_local std::unordered_map<int, cublasHandle_t> cublasHandles;
 thread_local std::unordered_map<int, cusolverDnHandle_t> cusolverDnHandles;
 thread_local std::unordered_map<int, cusolverSpHandle_t> cusolverSpHandles;
 
-thread_local struct Destroyer {
-    ~Destroyer() {
+thread_local struct HandleManager {
+    template<typename T>
+    T get(std::unordered_map<int, T>& m, int i) const {
+        return m.at(i);
+    }
+    template<typename T>
+    T set(std::unordered_map<int, T>& m, int i, T v) const {
+        m.insert(std::pair<int, T>(i, v));
+        return v;
+    }
+    ~HandleManager() {
         for(auto const& i : cublasHandles) {
             cublasDestroy(i.second);
         }
@@ -44,43 +53,43 @@ thread_local struct Destroyer {
             cusolverSpDestroy(i.second);
         }
     }
-} destroyer;
+} manager;
 
 }
 
 void* CudaDevice::GetCublasHandle() {
     try {
-        return cublasHandles.at(cuda_device);
+        return manager.get(cublasHandles, cuda_device);
     } catch(std::out_of_range) {
         cudaSetDevice(cuda_device);
         cublasHandle_t handle = nullptr;
         cublasStatus_t status = cublasCreate(&handle);
         ptiCheckError(status != CUBLAS_STATUS_SUCCESS, ERR_CUDA_LIBRARY, ("cuBLAS library error code " + std::to_string(status)).c_str());
-        return handle;
+        return manager.set(cublasHandles, cuda_device, handle);
     }
 }
 
 void* CudaDevice::GetCusolverDnHandle() {
     try {
-        return cusolverDnHandles.at(cuda_device);
+        return manager.get(cusolverDnHandles, cuda_device);
     } catch(std::out_of_range) {
         cudaSetDevice(cuda_device);
         cusolverDnHandle_t handle = nullptr;
         cusolverStatus_t status = cusolverDnCreate(&handle);
         ptiCheckError(status != CUSOLVER_STATUS_SUCCESS, ERR_CUDA_LIBRARY, ("cuBLAS library error code " + std::to_string(status)).c_str());
-        return handle;
+        return manager.set(cusolverDnHandles, cuda_device, handle);
     }
 }
 
 void* CudaDevice::GetCusolverSpHandle() {
     try {
-        return cusolverSpHandles.at(cuda_device);
+        return manager.get(cusolverSpHandles, cuda_device);
     } catch(std::out_of_range) {
         cudaSetDevice(cuda_device);
         cusolverSpHandle_t handle = nullptr;
         cusolverStatus_t status = cusolverSpCreate(&handle);
         ptiCheckError(status != CUSOLVER_STATUS_SUCCESS, ERR_CUDA_LIBRARY, ("cuBLAS library error code " + std::to_string(status)).c_str());
-        return handle;
+        return manager.set(cusolverSpHandles, cuda_device, handle);
     }
 }
 

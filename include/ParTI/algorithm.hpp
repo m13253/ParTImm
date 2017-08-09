@@ -45,11 +45,13 @@ void set_semisparse_indices_by_sparse_ref(
 );
 
 void svd(
-    SparseTensor& U,
-    SparseTensor& S,
-    SparseTensor& V,
-    SparseTensor& X,
-    CudaDevice&   cuda_device
+    Tensor& U,
+    bool U_want_transpose,
+    Tensor& S,
+    Tensor& V,
+    bool V_want_transpose,
+    Tensor& X,
+    CudaDevice& cuda_device
 );
 
 SparseTensor tucker_decomposition(

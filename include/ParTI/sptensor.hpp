@@ -28,6 +28,8 @@
 
 namespace pti {
 
+struct Tensor;
+
 struct SparseTensor : public BaseTensor {
 
     MemBlock<bool[]> is_dense;
@@ -53,6 +55,9 @@ public:
     SparseTensor(SparseTensor&& other);
     SparseTensor& operator= (SparseTensor&& other);
     ~SparseTensor();
+
+    explicit SparseTensor(Tensor&& other);
+    SparseTensor& operator= (Tensor&& other);
 
     SparseTensor& reset(size_t nmodes, size_t const shape[], bool const is_dense[]);
 
