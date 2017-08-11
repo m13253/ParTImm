@@ -120,7 +120,7 @@ double Timer::print_elapsed_time(char const* name) const {
     return elapsed_time;
 }
 
-static Timer default_timer((cpu));
+static Timer default_timer;
 
 void tick() {
     default_timer.start();
