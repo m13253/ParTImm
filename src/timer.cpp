@@ -31,6 +31,11 @@
 
 namespace pti {
 
+Timer::Timer() {
+    this->device = cpu;
+    cuda_dev = nullptr;
+}
+
 Timer::Timer(int device) {
     this->device = device;
     cuda_dev = dynamic_cast<CudaDevice*>(session.devices[device]);

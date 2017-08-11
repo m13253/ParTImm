@@ -51,6 +51,7 @@ private:
     void* cuda_start_event;
     void* cuda_stop_event;
 
+    Timer();
     void cuda_init();
     void cuda_fini();
     void cuda_start();
