@@ -50,7 +50,6 @@ void Session::detect_devices() {
         CpuDevice* cpu_device = new CpuDevice(i, cpu_mem_node_id);
         add_device(cpu_device);
     }
-    omp_set_num_threads(num_cpu_cores);
 #ifdef PARTI_USE_CUDA
     detect_cuda_devices();
 #endif
@@ -64,18 +63,16 @@ void Session::print_devices() const {
         std::fprintf(stderr, "%4zu  %-67s %4d\n", i, device.name.c_str(), device.mem_node);
     }
     if(num_devices != 1) {
-        std::fprintf(stderr, "\x1b[1m%zu devices detected.\x1b[21m\n\n", num_devices);
+        std::fprintf(stderr, "\x1b[1m%zu devices detected, ", num_devices);
     } else {
-        std::fprintf(stderr, "\x1b[1m%zu device detected.\x1b[21m\n\n", num_devices);
+        std::fprintf(stderr, "\x1b[1m%zu device detected, ", num_devices);
     }
-}
-
-void Session::omp_set_num_threads(int num_threads) const {
-    ::omp_set_num_threads(num_threads);
-}
-
-int Session::omp_get_num_threads() const {
-    return ::omp_get_num_threads();
+    int omp_threads = omp_get_max_threads();
+    if(omp_threads != 1) {
+        std::fprintf(stderr, "using %d OpenMP threads.\x1b[21m\n\n", omp_threads);
+    } else {
+        std::fprintf(stderr, "using %d OpenMP thread.\x1b[21m\n\n", omp_threads);
+    }
 }
 
 int Session::add_device(Device* device) {

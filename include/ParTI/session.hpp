@@ -34,8 +34,6 @@ struct Session {
     Session();
     ~Session();
     void print_devices() const;
-    void omp_set_num_threads(int num_threads) const;
-    int omp_get_num_threads() const;
 
     std::vector<Device*> devices;
     std::vector<MemNode*> mem_nodes;
