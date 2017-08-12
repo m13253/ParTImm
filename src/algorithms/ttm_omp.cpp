@@ -97,7 +97,7 @@ SparseTensor tensor_times_matrix_omp(SparseTensor& X, SparseTensor& U, size_t mo
     size_t Y_num_subchunks = Y.strides(cpu)[mode];
     assert(Y_num_subchunks * Y_subchunk_size == Y.chunk_size);
     // i is chunk-level on Y
-    #pragma omp parallel
+    #pragma omp parallel for
     for(size_t i = 0; i < Y.num_chunks; ++i) {
         size_t inz_begin = fiberidx[i];
         size_t inz_end = fiberidx[i + 1];

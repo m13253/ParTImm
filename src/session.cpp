@@ -70,6 +70,14 @@ void Session::print_devices() const {
     }
 }
 
+void Session::omp_set_num_threads(int num_threads) const {
+    ::omp_set_num_threads(num_threads);
+}
+
+int Session::omp_get_num_threads() const {
+    return ::omp_get_num_threads();
+}
+
 int Session::add_device(Device* device) {
     devices.push_back(device);
     return (int) devices.size() - 1;
