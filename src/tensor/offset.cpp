@@ -27,22 +27,33 @@ bool Tensor::offset_to_indices(size_t indices[], size_t offset) {
         std::memcpy(indices, this->shape(cpu), nmodes * sizeof (size_t));
         return false;
     }
-    if(chunk_size != 1) { // Semi sparse tensor
-        size_t intra_chunk = offset % chunk_size;
-        size_t* storage_order = this->storage_order(cpu);
-        size_t* strides = this->strides(cpu);
-        for(size_t o = this->storage_order.size()-1; o != 0; --o) {
-            size_t m = storage_order[o];
-            indices[m] = intra_chunk % strides[m];
-            intra_chunk /= strides[m];
-        }
-        indices[storage_order[0]] = intra_chunk;
+    size_t intra_chunk = offset % chunk_size;
+    size_t const* storage_order = this->storage_order(cpu);
+    size_t const* strides = this->strides(cpu);
+    for(size_t o = this->storage_order.size()-1; o != 0; --o) {
+        size_t m = storage_order[o];
+        indices[m] = intra_chunk % strides[m];
+        intra_chunk /= strides[m];
     }
+    indices[storage_order[0]] = intra_chunk;
     bool inbound = true;
     for(size_t m = 0; m < this->nmodes; ++m) {
         inbound = inbound && indices[m] < this->shape(cpu)[m];
     }
     return inbound;
+}
+
+size_t Tensor::indices_to_offset(size_t const indices[]) {
+    size_t const* storage_order = this->storage_order(cpu);
+    size_t const* strides = this->strides(cpu);
+    size_t offset = indices[storage_order[0]];
+    for(size_t o = 1; o < this->storage_order.size(); ++o) {
+        size_t m = storage_order[o];
+        offset *= strides[m];
+        offset += indices[m];
+    }
+
+    return offset;
 }
 
 }

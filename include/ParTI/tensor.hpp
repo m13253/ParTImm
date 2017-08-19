@@ -52,6 +52,11 @@ public:
     Tensor& reset(size_t nmodes, size_t const shape[], bool initialize = true);
 
     bool offset_to_indices(size_t indices[], size_t offset);
+    size_t indices_to_offset(size_t const indices[]);
+
+    void dump(std::FILE* fp);
+
+    static Tensor load(std::FILE* fp);
 
     std::string to_string(size_t limit = 0);
 

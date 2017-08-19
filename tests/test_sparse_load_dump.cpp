@@ -50,7 +50,7 @@ int main(int argc, char const* argv[]) {
     std::printf("tsr = %s\n", tsr.to_string(!dense_format, limit).c_str());
 
     if(args.size() == 2) {
-        CFile fo(args[0], "w");
+        CFile fo(args[1], "w");
         tsr.dump(fo, 1);
     }
 

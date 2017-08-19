@@ -16,7 +16,7 @@
     If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <ParTI/sptensor.hpp>
+#include <ParTI/tensor.hpp>
 #include <cstdio>
 #include <memory>
 #include <ParTI/error.hpp>
@@ -24,27 +24,41 @@
 
 namespace pti {
 
-void SparseTensor::dump(std::FILE* fp, size_t start_index) {
+void Tensor::dump(std::FILE* fp) {
     int io_result;
 
     io_result = std::fprintf(fp, "%zu\n", nmodes);
     ptiCheckOSError(io_result < 0);
 
-    io_result = std::fprintf(fp, "%s\n", array_to_string(shape(cpu), shape.size(), "\t").c_str());
+    io_result = std::fprintf(fp, "%s\n\n", array_to_string(shape(cpu), shape.size(), "\t").c_str());
     ptiCheckOSError(io_result < 0);
 
-    std::unique_ptr<size_t[]> coordinate(new size_t [nmodes]);
+    if(chunk_size == 0) {
+        return;
+    }
+
+    std::unique_ptr<size_t[]> coordinate(new size_t [nmodes]());
+    size_t const* shape = this->shape(cpu);
     Scalar const* values = this->values(cpu);
-    for(size_t i = 0; i < num_chunks * chunk_size; ++i) {
-        bool inbound = offset_to_indices(coordinate.get(), i);
-        if(inbound) {
-            for(size_t m = 0; m < nmodes; ++m) {
-                coordinate[m] += start_index;
+    while(coordinate[0] < shape[0]) {
+        size_t offset = this->indices_to_offset(coordinate.get());
+        std::fprintf(fp, "% .16lg", (double) values[offset]);
+        ptiCheckOSError(io_result < 0);
+
+        ++coordinate[nmodes - 1];
+        for(size_t m = nmodes - 1; m != 0; --m) {
+            if(coordinate[m] >= shape[m]) {
+                std::fprintf(fp, "\n");
+                ptiCheckOSError(io_result < 0);
+                coordinate[m] = 0;
+                ++coordinate[m - 1];
+            } else {
+                if(m == nmodes - 1) {
+                    std::fprintf(fp, "\t");
+                    ptiCheckOSError(io_result < 0);
+                }
+                break;
             }
-            io_result = std::fprintf(fp, "%s\t% .16lg\n",
-                array_to_string(coordinate.get(), nmodes, "\t").c_str(),
-                (double) values[i]);
-            ptiCheckOSError(io_result < 0);
         }
     }
 }
