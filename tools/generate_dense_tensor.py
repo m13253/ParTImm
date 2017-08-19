@@ -16,7 +16,6 @@
 # License along with ParTI!.
 # If not, see <http://www.gnu.org/licenses/>.
 
-import math
 import random
 import sys
 
@@ -36,6 +35,7 @@ def human_size(nbytes):
             return '%.1f MiB' % (nbytes / 1048576.0)
         else:
             return '%.1f GiB' % (nbytes / 1073741824.0)
+
 
 def main(argv):
     if len(argv) < 3:
