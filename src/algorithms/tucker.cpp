@@ -27,6 +27,7 @@
 #include <ParTI/error.hpp>
 #include <ParTI/memblock.hpp>
 #include <ParTI/sptensor.hpp>
+#include <ParTI/tensor.hpp>
 #include <ParTI/utils.hpp>
 
 #ifdef PARTI_USE_CUDA
@@ -39,16 +40,15 @@ namespace pti {
 namespace {
 
 void uniform_random_fill_matrix(
-    SparseTensor&   mtx
+    Tensor&   mtx
 ) {
     ptiCheckError(mtx.nmodes != 2, ERR_SHAPE_MISMATCH, "mtx.nmodes != 2");
-    ptiCheckError(mtx.dense_order(cpu)[0] != 0, ERR_SHAPE_MISMATCH, "mtx.dense_order[0] != 0");
-    ptiCheckError(mtx.dense_order(cpu)[1] != 1, ERR_SHAPE_MISMATCH, "mtx.dense_order[1] != 1");
+    ptiCheckError(mtx.storage_order(cpu)[0] != 0, ERR_SHAPE_MISMATCH, "mtx.storage_order[0] != 0");
+    ptiCheckError(mtx.storage_order(cpu)[1] != 1, ERR_SHAPE_MISMATCH, "mtx.storage_order[1] != 1");
 
     std::default_random_engine generator;
     std::uniform_real_distribution<Scalar> distribution(-1.0, 1.0);
 
-    mtx.init_single_chunk(false);
     size_t nrows = mtx.shape(cpu)[0];
     size_t ncols = mtx.shape(cpu)[1];
     size_t stride = mtx.strides(cpu)[1];
@@ -67,7 +67,7 @@ void uniform_random_fill_matrix(
     }
 }
 
-SparseTensor nvecs(
+Tensor nvecs(
     SparseTensor& t,
     size_t        n,
     size_t        r,
@@ -97,9 +97,7 @@ SparseTensor nvecs(
 
     // cuSOLVER use FORTRAN style, swap them
     size_t tm_shape[2] = {tm_n, tm_m};
-    bool full_dense[2] = {true, true};
-    SparseTensor tm(2, tm_shape, full_dense);
-    tm.init_single_chunk();
+    Tensor tm(2, tm_shape);
     size_t tm_stride = tm.strides(cpu)[1];
 
     if(!tm_trans) {
@@ -184,8 +182,7 @@ SparseTensor nvecs(
     ptiCheckError(svd_devInfo_value != 0, ERR_CUDA_LIBRARY, ("devInfo = " + std::to_string(svd_devInfo_value)).c_str());
 
     size_t result_shape[2] = {t.shape(cpu)[n], r};
-    SparseTensor result(2, result_shape, full_dense);
-    result.init_single_chunk();
+    Tensor result(2, result_shape);
     size_t result_stride = result.strides(cpu)[1];
 
     if(!tm_trans) {
@@ -231,14 +228,13 @@ SparseTensor tucker_decomposition(
     size_t N = X.nmodes;
     double normX = X.norm();
 
-    std::unique_ptr<SparseTensor[]> U(new SparseTensor[N]);
+    std::unique_ptr<Tensor[]> U(new Tensor[N]);
     size_t U_shape[2];
-    bool U_is_dense[2] = {true, true};
     for(size_t ni = 1; ni < N; ++ni) {
         size_t n = dimorder[ni];
         U_shape[0] = X.shape(cpu)[n];
         U_shape[1] = R[n];
-        U[n].reset(2, U_shape, U_is_dense);
+        U[n].reset(2, U_shape);
         uniform_random_fill_matrix(U[n]);
     }
     SparseTensor core;

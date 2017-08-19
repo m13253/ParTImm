@@ -27,13 +27,13 @@ namespace pti {
 
 SparseTensor tensor_times_matrix(
     SparseTensor& X,
-    SparseTensor& U,
+    Tensor& U,
     size_t mode
 );
 
 SparseTensor tensor_times_matrix_omp(
     SparseTensor& X,
-    SparseTensor& U,
+    Tensor& U,
     size_t mode
 );
 

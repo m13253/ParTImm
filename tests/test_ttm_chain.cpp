@@ -22,6 +22,7 @@
 #include <ParTI/timer.hpp>
 #include <ParTI/session.hpp>
 #include <ParTI/sptensor.hpp>
+#include <ParTI/tensor.hpp>
 
 using namespace pti;
 
@@ -66,10 +67,10 @@ int main(int argc, char const* argv[]) {
         size_t mode = X.nmodes - argi;
 
         CFile fU(args[argi], "r");
-        SparseTensor U = SparseTensor::load(fU, 1).to_fully_dense();
+        Tensor U = Tensor::load(fU);
         fU.fclose();
 
-        std::printf("\nU[%zu] = %s\n", argi, U.to_string(false, limit).c_str());
+        std::printf("\nU[%zu] = %s\n", argi, U.to_string(limit).c_str());
 
         Timer timer(cpu);
         timer.start();

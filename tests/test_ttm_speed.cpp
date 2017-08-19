@@ -22,6 +22,7 @@
 #include <ParTI/timer.hpp>
 #include <ParTI/session.hpp>
 #include <ParTI/sptensor.hpp>
+#include <ParTI/tensor.hpp>
 
 using namespace pti;
 
@@ -53,7 +54,7 @@ int main(int argc, char const* argv[]) {
     fX.fclose();
 
     CFile fU(args[1], "r");
-    SparseTensor U = SparseTensor::load(fU, 1).to_fully_dense();
+    Tensor U = Tensor::load(fU);
     fU.fclose();
 
     Timer timer(cpu);

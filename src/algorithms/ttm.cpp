@@ -24,12 +24,13 @@
 #include <ParTI/error.hpp>
 #include <ParTI/errcode.hpp>
 #include <ParTI/sptensor.hpp>
+#include <ParTI/tensor.hpp>
 #include <ParTI/timer.hpp>
 #include <ParTI/utils.hpp>
 
 namespace pti {
 
-SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) {
+SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
 
     size_t nmodes = X.nmodes;
     size_t nspmodes = X.sparse_order.size();
@@ -38,8 +39,8 @@ SparseTensor tensor_times_matrix(SparseTensor& X, SparseTensor& U, size_t mode) 
     ptiCheckError(X.is_dense(cpu)[mode], ERR_UNKNOWN, "X.is_dense[mode] != false");
 
     ptiCheckError(U.nmodes != 2, ERR_SHAPE_MISMATCH, "U.nmodes != 2");
-    ptiCheckError(U.dense_order(cpu)[0] != 0, ERR_SHAPE_MISMATCH, "U.dense_order[0] != 0");
-    ptiCheckError(U.dense_order(cpu)[1] != 1, ERR_SHAPE_MISMATCH, "U.dense_order[1] != 1");
+    ptiCheckError(U.storage_order(cpu)[0] != 0, ERR_SHAPE_MISMATCH, "U.storage_order[0] != 0");
+    ptiCheckError(U.storage_order(cpu)[1] != 1, ERR_SHAPE_MISMATCH, "U.storage_order[1] != 1");
 
     size_t nrows = U.shape(cpu)[0];
     size_t ncols = U.shape(cpu)[1];
