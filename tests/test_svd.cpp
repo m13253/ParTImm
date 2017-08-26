@@ -33,10 +33,13 @@ using namespace pti;
 int main(int argc, char const* argv[]) {
     size_t limit = 10;
     int device = 0;
+    bool no_u = false, no_v = false;
     ParamDefinition defs[] = {
         { "-l",             PARAM_SIZET,  { &limit } },
         { "--limit",        PARAM_SIZET,  { &limit } },
         { "--dev",          PARAM_INT,    { &device } },
+        { "--no-u",         PARAM_BOOL,   { &no_u } },
+        { "--no-v",         PARAM_BOOL,   { &no_v } },
         { ptiEndParamDefinition }
     };
     std::vector<char const*> args = parse_args(argc, argv, defs);
@@ -46,6 +49,8 @@ int main(int argc, char const* argv[]) {
         std::printf("Options:\n");
         std::printf("\t-l, --limit\t\tLimit the number of elements to print [Default: 10].\n");
         std::printf("\t--dev\t\tCUDA device\n");
+        std::printf("\t--no-u\t\tDo not calculate U");
+        std::printf("\t--no-v\t\tDo not calculate V");
         std::printf("\n");
         return 1;
     }
@@ -59,17 +64,26 @@ int main(int argc, char const* argv[]) {
     }
 
     CFile fX(args[0], "r");
-    Tensor X = Tensor(SparseTensor::load(fX, 1).to_fully_dense());
+    Tensor X = Tensor::load(fX);
     fX.fclose();
 
     std::printf("X = %s\n\n", X.to_string(limit).c_str());
 
     Tensor U, S, V;
-    svd(U, false, S, V, false, X, *cuda_device);
+    svd(
+        no_u ? nullptr : &U, false,
+        S,
+        no_v ? nullptr : &V, false,
+        X, *cuda_device
+    );
 
-    std::printf("U = %s\n\n", U.to_string(limit).c_str());
+    if(!no_u) {
+        std::printf("U = %s\n\n", U.to_string(limit).c_str());
+    }
     std::printf("S = %s\n\n", S.to_string(limit).c_str());
-    std::printf("V = %s\n\n", V.to_string(limit).c_str());
+    if(!no_v) {
+        std::printf("V = %s\n\n", V.to_string(limit).c_str());
+    }
 
     return 0;
 }

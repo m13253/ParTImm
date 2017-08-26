@@ -152,10 +152,10 @@ void transpose_matrix(
 }
 
 void svd(
-    Tensor& U,
+    Tensor* U,
     bool U_want_transpose,
     Tensor& S,
-    Tensor& V,
+    Tensor* V,
     bool V_want_transpose,
     Tensor& X,
     CudaDevice& cuda_device
@@ -172,6 +172,10 @@ void svd(
 
     bool X_transposed = X_shape[0] < X_shape[1];
     transpose_matrix(X, X_transposed, true, cuda_device);
+    if(X_transposed) {
+        std::swap(U, V);
+        std::swap(U_want_transpose, V_want_transpose);
+    }
 
     size_t svd_m = X_shape[0];
     size_t svd_n = X_shape[1];
@@ -191,11 +195,15 @@ void svd(
     );
     ptiCheckError(status, ERR_CUDA_LIBRARY, "cuSOLVER error");
 
-    init_matrix(U, svd_m, svd_m, true, true);
+    if(U != nullptr) {
+        init_matrix(*U, svd_m, svd_m, true, true);
+    }
     init_matrix(S, 1, svd_n, false, true);
-    init_matrix(V, svd_n, svd_n, true, true);
-    size_t svd_ldu = U.strides(cpu)[0];
-    size_t svd_ldvt = V.strides(cpu)[0];
+    if(V != nullptr) {
+        init_matrix(*V, svd_n, svd_n, true, true);
+    }
+    size_t svd_ldu = U ? U->strides(cpu)[0] : svd_m;
+    size_t svd_ldvt = V ? V->strides(cpu)[0] : svd_n;
 
     assert(svd_ldu >= svd_m);
     assert(svd_ldu >= 1);
@@ -211,16 +219,16 @@ void svd(
 
     status = cusolverDnSgesvd(
         handle,                                // handle
-        'A',                                   // jobu
-        'A',                                   // jobvt
+        U ? 'A' : 'N',                         // jobu
+        V ? 'A' : 'N',                         // jobvt
         svd_m,                                 // m
         svd_n,                                 // n
         X.values(cuda_device.mem_node),        // A
         svd_lda,                               // lda (lda >= max(1, m))
         S.values(cuda_device.mem_node),        // S
-        U.values(cuda_device.mem_node),        // U
+        U ? U->values(cuda_device.mem_node) : nullptr,      // U
         svd_ldu,                               // ldu
-        V.values(cuda_device.mem_node),        // VT
+        V ? V->values(cuda_device.mem_node) : nullptr,      // VT
         svd_ldvt,                              // ldvt
         svd_work(cuda_device.mem_node),        // work
         svd_work_size,                         // lwork
@@ -235,11 +243,11 @@ void svd(
     int svd_devInfo_value = *svd_devInfo(cpu);
     ptiCheckError(svd_devInfo_value != 0, ERR_CUDA_LIBRARY, ("devInfo = " + std::to_string(svd_devInfo_value)).c_str());
 
-    transpose_matrix(U, U_want_transpose != X_transposed, false, cuda_device);
-    transpose_matrix(V, V_want_transpose == X_transposed, false, cuda_device);
-
-    if(X_transposed) {
-        std::swap(U, V);
+    if(U != nullptr) {
+        transpose_matrix(*U, U_want_transpose != X_transposed, false, cuda_device);
+    }
+    if(V != nullptr) {
+        transpose_matrix(*V, V_want_transpose == X_transposed, false, cuda_device);
     }
 
 #else

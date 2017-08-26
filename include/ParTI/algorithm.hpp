@@ -45,10 +45,10 @@ void set_semisparse_indices_by_sparse_ref(
 );
 
 void svd(
-    Tensor& U,
+    Tensor* U,
     bool U_want_transpose,
     Tensor& S,
-    Tensor& V,
+    Tensor* V,
     bool V_want_transpose,
     Tensor& X,
     CudaDevice& cuda_device
