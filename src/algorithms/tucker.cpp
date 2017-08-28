@@ -74,142 +74,47 @@ Tensor nvecs(
     CudaDevice&   cuda_device
 ) {
 
-#ifdef PARTI_USE_CUDA
-
-    ptiCheckError(sizeof (Scalar) != sizeof (float), ERR_BUILD_CONFIG, "Scalar != float");
     ptiCheckError(t.is_dense(cpu)[n] != false, ERR_SHAPE_MISMATCH, "t.is_dense[n] != false");
 
-    cusolverDnHandle_t handle = (cusolverDnHandle_t) cuda_device.GetCusolverDnHandle();
-    cusolverStatus_t status;
-
-    bool tm_trans;
-    size_t tm_m; // rows
-    size_t tm_n; // colums
-    if(t.shape(cpu)[n] >= t.chunk_size) {
-        tm_trans = false;
-        tm_m = t.shape(cpu)[n];
-        tm_n = t.chunk_size;
-    } else {
-        tm_trans = true;
-        tm_m = t.chunk_size;
-        tm_n = t.shape(cpu)[n];
-    }
-
-    // cuSOLVER use FORTRAN style, swap them
-    size_t tm_shape[2] = {tm_n, tm_m};
+    size_t const tm_shape[2] = { t.shape(cpu)[n], t.chunk_size };
     Tensor tm(2, tm_shape);
+    size_t tm_m = tm_shape[0];
+    size_t tm_n = tm_shape[1];
     size_t tm_stride = tm.strides(cpu)[1];
 
-    if(!tm_trans) {
-        for(size_t i = 0; i < tm_m; ++i) {
-            size_t row = t.indices[n](cpu)[i];
-            for(size_t j = 0; j < tm_n; ++j) {
-                assert(j < tm_shape[0]);
-                assert(row < tm_shape[1]);
-                assert(i < t.num_chunks);
-                assert(j < t.chunk_size);
-                tm.values(cpu)[j * tm_stride + row] = t.values(cpu)[i * t.chunk_size + j];
-            }
-        }
-    } else {
-        for(size_t i = 0; i < tm_n; ++i) {
-            size_t row = t.indices[n](cpu)[i];
-            for(size_t j = 0; j < tm_m; ++j) {
-                assert(row < tm_shape[0]);
-                assert(j < tm_shape[1]);
-                assert(i < t.num_chunks);
-                assert(j < t.chunk_size);
-                tm.values(cpu)[row * tm_stride + j] = t.values(cpu)[i * t.chunk_size + j];
-            }
+    for(size_t i = 0; i < tm_m; ++i) {
+        size_t row = t.indices[n](cpu)[i];
+        for(size_t j = 0; j < tm_n; ++j) {
+            assert(row < tm_shape[0]);
+            assert(j < tm_shape[1]);
+            assert(i < t.num_chunks);
+            assert(j < t.chunk_size);
+            tm.values(cpu)[row * tm_stride + j] = t.values(cpu)[i * t.chunk_size + j];
         }
     }
 
-    size_t svd_m = tm_stride;
-    size_t svd_n = tm_shape[0];
-    size_t svd_ld = tm_shape[1];
+    std::fprintf(stderr, "unfold(t, %zu) = %s\n", n, tm.to_string(false).c_str());
 
-    int svd_work_size;
-    status = cusolverDnSgesvd_bufferSize(
-        handle,                                // handle
-        svd_m,                                 // m
-        svd_n,                                 // n
-        &svd_work_size                         // lwork
-    );
-    ptiCheckError(status, ERR_CUDA_LIBRARY, "cuSOLVER error");
+    Tensor u, s;
 
-    MemBlock<Scalar[]> S;
-    S.allocate(cuda_device.mem_node, std::min(svd_m, svd_n));
-    MemBlock<Scalar[]> U;
-    U.allocate(cuda_device.mem_node, svd_m);
-    MemBlock<Scalar[]> VT;
-    VT.allocate(cuda_device.mem_node, svd_n);
-    MemBlock<Scalar[]> svd_work;
-    svd_work.allocate(cuda_device.mem_node, svd_work_size);
-    MemBlock<Scalar[]> svd_rwork;
-    svd_rwork.allocate(cuda_device.mem_node, std::min(svd_m, svd_n) - 1);
-    MemBlock<int> svd_devInfo;
-    svd_devInfo.allocate(cuda_device.mem_node);
+    svd(&u, false, s, nullptr, false, tm, cuda_device);
 
-    assert(svd_m >= svd_n);
-    assert(svd_m >= 1);
-    assert(svd_ld >= svd_m);
-    assert(svd_n >= 1);
+    std::fprintf(stderr, "svd(unfold(t)).U = %s\n", u.to_string(false).c_str());
 
-    status = cusolverDnSgesvd(
-        handle,                                // handle
-        !tm_trans ? 'O' : 'N',                 // jobu
-        !tm_trans ? 'N' : 'O',                 // jobvt
-        svd_m,                                 // m
-        svd_n,                                 // n
-        tm.values(cuda_device.mem_node),       // A
-        svd_ld,                                // lda (lda >= max(1, m))
-        S(cuda_device.mem_node),               // S
-        U(cuda_device.mem_node),               // U
-        svd_ld,                                // ldu
-        VT(cuda_device.mem_node),              // VT
-        svd_n,                                 // ldvt
-        svd_work(cuda_device.mem_node),        // work
-        svd_work_size,                         // lwork
-        svd_rwork(cuda_device.mem_node),       // rwork
-        svd_devInfo(cuda_device.mem_node)      // devInfo
-    );
-    ptiCheckError(status, ERR_CUDA_LIBRARY, "cuSOLVER error");
-
-    cudaSetDevice(cuda_device.cuda_device);
-    cudaDeviceSynchronize();
-
-    int svd_devInfo_value = *svd_devInfo(cpu);
-    ptiCheckError(svd_devInfo_value != 0, ERR_CUDA_LIBRARY, ("devInfo = " + std::to_string(svd_devInfo_value)).c_str());
-
-    size_t result_shape[2] = {t.shape(cpu)[n], r};
+    size_t const result_shape[2] = { t.shape(cpu)[n], r };
     Tensor result(2, result_shape);
+    size_t result_m = result_shape[0];
+    size_t result_n = result_shape[1];
     size_t result_stride = result.strides(cpu)[1];
+    size_t u_stride = u.strides(cpu)[1];
 
-    if(!tm_trans) {
-        for(size_t i = 0; i < t.shape(cpu)[n]; ++i) {
-            for(size_t j = 0; j < r; ++j) {
-                result.values(cpu)[i * result_stride + j] = tm.values(cpu)[j * tm_stride + i];
-            }
-        }
-    } else {
-        for(size_t i = 0; i < t.shape(cpu)[n]; ++i) {
-            for(size_t j = 0; j < r; ++j) {
-                result.values(cpu)[i * result_stride + j] = tm.values(cpu)[j * tm_stride + i];
-            }
+    for(size_t i = 0; i < result_m; ++i) {
+        for(size_t j = 0; j < result_n; ++j) {
+            result.values(cpu)[i * result_stride + j] = u.values(cpu)[i * u_stride + j];
         }
     }
 
     return result;
-
-#else
-
-    unused_param(t);
-    unused_param(n);
-    unused_param(r);
-    unused_param(cuda_device);
-    ptiCheckError(true, ERR_BUILD_CONFIG, "CUDA not enabled");
-
-#endif
 
 }
 
@@ -253,20 +158,23 @@ SparseTensor tucker_decomposition(
                     std::fprintf(stderr, "Iter %u, n = %zu, m = %zu\n", iter, n, m);
                     Utilde_next = tensor_times_matrix(*Utilde, U[m], m);
                     Utilde = &Utilde_next;
-                    std::fprintf(stderr, "Utilde = %s\n", Utilde->to_string(true).c_str());
                 }
             }
+            std::fprintf(stderr, "Utilde = %s\n", Utilde->to_string(false).c_str());
             // Mode n is sparse, while other modes are dense
             U[n] = nvecs(*Utilde, n, R[n], cuda_device);
+            std::fprintf(stderr, "U[%zu] = %s\n", n, U[n].to_string(false).c_str());
         }
 
         core = tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1]);
 
-        double normresidual = std::hypot(normX, core.norm());
-        fit = 1 - normresidual / normX;
+        double normCore = core.norm();
+        double normResidual = std::hypot(normX, normCore);
+        fit = 1 - normResidual / normX;
         double fitchange = std::fabs(fitold - fit);
 
-        std::fprintf(stderr, "normX = %g, normCore = %g\n", normX, core.norm());
+        std::fprintf(stderr, "normX = %g, normCore = %g\n", normX, normCore);
+        std::fprintf(stderr, "fit = %g, fitchange = %g\n", fit, fitchange);
 
         if(iter != 0 && fitchange < tol) {
             break;
