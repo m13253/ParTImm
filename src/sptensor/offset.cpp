@@ -51,4 +51,17 @@ bool SparseTensor::offset_to_indices(size_t indices[], size_t offset) {
     return inbound;
 }
 
+size_t SparseTensor::indices_to_intra_offset(size_t const indices[]) {
+    size_t const* dense_order = this->dense_order(cpu);
+    size_t const* strides = this->strides(cpu);
+    size_t offset = indices[dense_order[0]];
+    for(size_t o = 1; o < this->dense_order.size(); ++o) {
+        size_t m = dense_order[o];
+        offset *= strides[m];
+        offset += indices[m];
+    }
+
+    return offset;
+}
+
 }

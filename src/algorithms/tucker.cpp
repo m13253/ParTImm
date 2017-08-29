@@ -76,22 +76,7 @@ Tensor nvecs(
 
     ptiCheckError(t.is_dense(cpu)[n] != false, ERR_SHAPE_MISMATCH, "t.is_dense[n] != false");
 
-    size_t const tm_shape[2] = { t.shape(cpu)[n], t.chunk_size };
-    Tensor tm(2, tm_shape);
-    size_t tm_m = tm_shape[0];
-    size_t tm_n = tm_shape[1];
-    size_t tm_stride = tm.strides(cpu)[1];
-
-    for(size_t i = 0; i < tm_m; ++i) {
-        size_t row = t.indices[n](cpu)[i];
-        for(size_t j = 0; j < tm_n; ++j) {
-            assert(row < tm_shape[0]);
-            assert(j < tm_shape[1]);
-            assert(i < t.num_chunks);
-            assert(j < t.chunk_size);
-            tm.values(cpu)[row * tm_stride + j] = t.values(cpu)[i * t.chunk_size + j];
-        }
-    }
+    Tensor tm = unfold(t, n);
 
     std::fprintf(stderr, "unfold(t, %zu) = %s\n", n, tm.to_string(false).c_str());
 

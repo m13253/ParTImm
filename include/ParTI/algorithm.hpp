@@ -22,6 +22,7 @@
 #include <vector>
 #include <ParTI/device.hpp>
 #include <ParTI/sptensor.hpp>
+#include <ParTI/tensor.hpp>
 
 namespace pti {
 
@@ -34,6 +35,11 @@ SparseTensor tensor_times_matrix(
 SparseTensor tensor_times_matrix_omp(
     SparseTensor& X,
     Tensor& U,
+    size_t mode
+);
+
+Tensor unfold(
+    SparseTensor& X,
     size_t mode
 );
 
