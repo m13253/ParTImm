@@ -48,6 +48,8 @@ std::string SparseTensor::to_string(bool sparse_format, size_t limit) {
     result += array_to_string(shape(cpu), nmodes);
     result += "], strides = [";
     result += array_to_string(strides(cpu), strides.size());
+    result += "],\n  is_dense = [";
+    result += array_to_string(is_dense(cpu), is_dense.size());
     result += "],\n  dense_order = [";
     result += array_to_string(dense_order(cpu), dense_order.size());
     result += "], sparse_order = [";

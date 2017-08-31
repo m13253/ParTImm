@@ -74,8 +74,6 @@ Tensor nvecs(
     CudaDevice&   cuda_device
 ) {
 
-    ptiCheckError(t.is_dense(cpu)[n] != false, ERR_SHAPE_MISMATCH, "t.is_dense[n] != false");
-
     Tensor tm = unfold(t, n);
 
     std::fprintf(stderr, "unfold(t, %zu) = %s\n", n, tm.to_string(false).c_str());

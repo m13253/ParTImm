@@ -9,9 +9,11 @@ option(USE_OpenBLAS "Use OpenBLAS library" OFF)
 option(USE_MAGMA "Use MAGMA library" OFF)
 option(USE_MKL "Use Intel MKL library" OFF)
 
+option(CUDA_HOST_COMPILER "CUDA host compiler (gcc < 6.0)" /usr/bin/gcc-5)
+
 if(USE_CUDA)
     find_package(CUDA REQUIRED)
-    list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+    list(APPEND CUDA_NVCC_FLAGS "-std=c++11" "-D_BITS_FLOATN_H")
     add_definitions(-DPARTI_USE_CUDA)
     link_libraries(${CUDA_cusparse_LIBRARY})
     link_libraries(${CUDA_cusolver_LIBRARY})

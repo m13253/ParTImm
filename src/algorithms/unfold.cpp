@@ -34,6 +34,9 @@ Tensor unfold(
     SparseTensor& X,
     size_t mode
 ) {
+    ptiCheckError(X.is_dense(cpu)[mode] != false, ERR_SHAPE_MISMATCH, "X.is_dense[mode] != false");
+    ptiCheckError(X.sparse_order.size() != 1, ERR_SHAPE_MISMATCH, "X.sparse_order.size() != 1")
+
     size_t const* shape = X.shape(cpu);
     size_t nrows = shape[mode];
     size_t ncols = 1;
@@ -55,22 +58,19 @@ Tensor unfold(
         std::memset(coordinate.get(), 0, X.nmodes * sizeof (size_t));
         size_t first_mode = mode == 0 ? 1 : 0;
         size_t last_mode = mode == X.nmodes - 1 ? X.nmodes - 2 : X.nmodes - 1;
-        std::fprintf(stderr, "first_mode = %zu, last_mode = %zu, mode = %zu\n", first_mode, last_mode, mode);
         assert(last_mode >= first_mode);
-        while(coordinate[last_mode] < shape[last_mode]) {
-
+        while(coordinate[first_mode] < shape[first_mode]) {
             size_t j = X.indices_to_intra_offset(coordinate.get());
             result.values(cpu)[row * result_stride + col] = X.values(cpu)[i * X.chunk_size + j];
 
             ++col;
-            ++coordinate[first_mode];
+            ++coordinate[last_mode];
             for(size_t m = last_mode; m != first_mode; --m) {
                 if(mode == m) {
                     continue;
-                }
-                if(coordinate[m] >= shape[m]) {
+                } else if(coordinate[m] >= shape[m]) {
                     coordinate[m] = 0;
-                    ++coordinate[mode == m - 1 ? m - 1 : m - 2];
+                    ++coordinate[(mode == m - 1) ? m - 2 : m - 1];
                 } else {
                     break;
                 }
