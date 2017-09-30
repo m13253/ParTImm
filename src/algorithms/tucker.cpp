@@ -76,13 +76,13 @@ Tensor nvecs(
 
     Tensor tm = unfold(t, n);
 
-    std::fprintf(stderr, "unfold(t, %zu) = %s\n", n, tm.to_string(false).c_str());
+    //std::fprintf(stderr, "unfold(t, %zu) = %s\n", n, tm.to_string(false).c_str());
 
     Tensor u, s;
 
     svd(&u, false, s, nullptr, false, tm, cuda_device);
 
-    std::fprintf(stderr, "svd(unfold(t)).U = %s\n", u.to_string(false).c_str());
+    //std::fprintf(stderr, "svd(unfold(t)).U = %s\n", u.to_string(false).c_str());
 
     size_t const result_shape[2] = { t.shape(cpu)[n], r };
     Tensor result(2, result_shape);
@@ -138,15 +138,15 @@ SparseTensor tucker_decomposition(
             Utilde = &X;
             for(size_t m = 0; m < N; ++m) {
                 if(m != n) {
-                    std::fprintf(stderr, "Iter %u, n = %zu, m = %zu\n", iter, n, m);
+                    //std::fprintf(stderr, "Iter %u, n = %zu, m = %zu\n", iter, n, m);
                     Utilde_next = tensor_times_matrix(*Utilde, U[m], m);
                     Utilde = &Utilde_next;
                 }
             }
-            std::fprintf(stderr, "Utilde = %s\n", Utilde->to_string(false).c_str());
+            //std::fprintf(stderr, "Utilde = %s\n", Utilde->to_string(false).c_str());
             // Mode n is sparse, while other modes are dense
             U[n] = nvecs(*Utilde, n, R[n], cuda_device);
-            std::fprintf(stderr, "U[%zu] = %s\n", n, U[n].to_string(false).c_str());
+            //std::fprintf(stderr, "U[%zu] = %s\n", n, U[n].to_string(false).c_str());
         }
 
         core = tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1]);
