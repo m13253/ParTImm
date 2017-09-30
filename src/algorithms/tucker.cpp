@@ -152,7 +152,7 @@ SparseTensor tucker_decomposition(
         core = tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1]);
 
         double normCore = core.norm();
-        double normResidual = std::hypot(normX, normCore);
+        double normResidual = std::sqrt(normX * normX - normCore * normCore);
         fit = 1 - normResidual / normX;
         double fitchange = std::fabs(fitold - fit);
 
