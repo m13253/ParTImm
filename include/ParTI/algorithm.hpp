@@ -69,6 +69,15 @@ SparseTensor tucker_decomposition(
     unsigned maxiters = 50
 );
 
+SparseTensor tensor_multiply_scalar(
+	SparseTensor& X, 
+	Scalar scalar
+);
+
+SparseTensor tensor_addition(
+	SparseTensor& X,
+	SparseTensor& Y
+);
 }
 
 #endif
