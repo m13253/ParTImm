@@ -20,6 +20,7 @@
 #include <ParTI/device.hpp>
 #include <ParTI/errcode.hpp>
 #include <ParTI/error.hpp>
+#include <ParTI/utils.hpp>
 #include <cublas.h>
 #include <cusolverDn.h>
 #include <cusolverSp.h>

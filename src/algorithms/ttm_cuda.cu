@@ -26,7 +26,6 @@
 #include <ParTI/sptensor.hpp>
 #include <ParTI/tensor.hpp>
 #include <ParTI/timer.hpp>
-#include <ParTI/utils.hpp>
 
 namespace pti {
 

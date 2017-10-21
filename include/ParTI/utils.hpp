@@ -21,6 +21,7 @@
 
 #include <cstring>
 #include <string>
+#include <sstream>
 #include <stdexcept>
 
 namespace pti {
@@ -39,12 +40,12 @@ inline std::string array_to_string(T const array[], size_t length, std::string c
     if(length == 0) {
         return std::string();
     }
-    std::string result = std::to_string(array[0]);
+    std::ostringstream result;
+    result << array[0];
     for(size_t i = 1; i < length; ++i) {
-        result += delim;
-        result += std::to_string(array[i]);
+        result << delim << array[i];
     }
-    return result;
+    return result.str();
 }
 
 class StrToNumError : public std::runtime_error {
@@ -68,5 +69,20 @@ static inline auto strtonum(Fn fn, const char *str, Args &&...args) -> decltype(
 }
 
 }
+
+#ifdef PATCH_STD_TO_STRING_NOT_FOUND
+
+namespace std {
+
+template <typename T>
+std::string to_string(T v) {
+    std::ostringstream result;
+    result << v;
+    return result.str();
+}
+
+}
+
+#endif
 
 #endif

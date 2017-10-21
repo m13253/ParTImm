@@ -123,7 +123,8 @@ SparseTensor tucker_decomposition(
         U_shape[0] = X.shape(cpu)[n];
         U_shape[1] = R[n];
         U[n].reset(2, U_shape);
-        uniform_random_fill_matrix(U[n]);
+        //uniform_random_fill_matrix(U[n]);
+        U[n] = nvecs(X, n, R[n], cuda_device);
     }
     SparseTensor core;
 
