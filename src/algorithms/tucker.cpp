@@ -84,7 +84,7 @@ Tensor nvecs(
 
     //std::fprintf(stderr, "svd(unfold(t)).U = %s\n", u.to_string(false).c_str());
 
-    size_t const result_shape[2] = { t.shape(cpu)[n], r };
+    size_t const result_shape[2] = { r, t.shape(cpu)[n] };
     Tensor result(2, result_shape);
     size_t result_m = result_shape[0];
     size_t result_n = result_shape[1];
@@ -93,7 +93,7 @@ Tensor nvecs(
 
     for(size_t i = 0; i < result_m; ++i) {
         for(size_t j = 0; j < result_n; ++j) {
-            result.values(cpu)[i * result_stride + j] = u.values(cpu)[i * u_stride + j];
+            result.values(cpu)[i * result_stride + j] = u.values(cpu)[j * u_stride + i];
         }
     }
 
@@ -123,10 +123,23 @@ SparseTensor tucker_decomposition(
         U_shape[0] = X.shape(cpu)[n];
         U_shape[1] = R[n];
         U[n].reset(2, U_shape);
-        //uniform_random_fill_matrix(U[n]);
-        U[n] = nvecs(X, n, R[n], cuda_device);
+        uniform_random_fill_matrix(U[n]);
+        //U[n] = nvecs(X, n, R[n], cuda_device);
     }
     SparseTensor core;
+
+    U[1].values(cpu)[0] = 0.79172504;
+    U[1].values(cpu)[1] = 0.52889492;
+    U[1].values(cpu)[2] = 0.56804456;
+    U[1].values(cpu)[8] = 0.92559664;
+    U[1].values(cpu)[9] = 0.07103606;
+    U[1].values(cpu)[10] = 0.0871293;
+    U[1].values(cpu)[16] = 0.0202184;
+    U[1].values(cpu)[17] = 0.83261985;
+    U[1].values(cpu)[18] = 0.77815675;
+    for(size_t m = 0; m < N; ++m) {
+        std::fprintf(stderr, "factor[%zu] = %s\n", m, U[m].to_string(false).c_str());
+    }
 
     double fit = 0;
     SparseTensor Utilde_next;
@@ -139,18 +152,19 @@ SparseTensor tucker_decomposition(
             Utilde = &X;
             for(size_t m = 0; m < N; ++m) {
                 if(m != n) {
-                    //std::fprintf(stderr, "Iter %u, n = %zu, m = %zu\n", iter, n, m);
+                    std::fprintf(stderr, "Iter %u, n = %zu, m = %zu\n", iter, n, m);
                     Utilde_next = tensor_times_matrix(*Utilde, U[m], m);
                     Utilde = &Utilde_next;
                 }
             }
-            //std::fprintf(stderr, "Utilde = %s\n", Utilde->to_string(false).c_str());
+            std::fprintf(stderr, "Utilde = %s\n", Utilde->to_string(false).c_str());
             // Mode n is sparse, while other modes are dense
             U[n] = nvecs(*Utilde, n, R[n], cuda_device);
-            //std::fprintf(stderr, "U[%zu] = %s\n", n, U[n].to_string(false).c_str());
+            std::fprintf(stderr, "U[%zu] = %s\n", n, U[n].to_string(false).c_str());
         }
 
         core = tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1]);
+        std::fprintf(stderr, "core = %s\n", core.to_string(false).c_str());
 
         double normCore = core.norm();
         double normResidual = std::sqrt(normX * normX - normCore * normCore);
