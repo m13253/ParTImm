@@ -6,6 +6,7 @@ option(BUILD_SHARED "Build shared library" ON)
 
 option(USE_CUDA "Use NVIDIA CUDA library" ON)
 option(USE_OpenBLAS "Use OpenBLAS library" OFF)
+option(USE_LAPACKE "Use LAPACKE library" OFF)
 option(USE_MAGMA "Use MAGMA library" OFF)
 option(USE_MKL "Use Intel MKL library" OFF)
 
@@ -26,6 +27,17 @@ if(USE_OpenBLAS)
     add_definitions(-DPARTI_USE_OpenBLAS)
     include_directories(${OpenBLAS_INCLUDE_DIRS})
     link_libraries(${OpenBLAS_LIBRARIES})
+endif()
+if(USE_LAPACKE)
+    find_library(
+        LAPACKE_LIBRARIES
+        NAMES lapacke
+        PATHS ${LAPACKE_DIR}
+    )
+    add_definitions(-DPARTI_USE_LAPACKE)
+    get_filename_component(LAPACKE_LIBDIR "${LAPACKE_LIBRARIES}" DIRECTORY)
+    include_directories("${LAPACKE_LIBDIR}/../include")
+    link_libraries(${LAPACKE_LIBRARIES})
 endif()
 if(USE_MAGMA)
     find_library(
