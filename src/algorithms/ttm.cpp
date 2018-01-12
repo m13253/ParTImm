@@ -46,7 +46,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
     size_t ncols = U.shape(cpu)[1];
     size_t Ustride = U.strides(cpu)[1];
 
-    ptiCheckError(X.shape(cpu)[mode] != nrows, ERR_SHAPE_MISMATCH, "X.shape[mode] != U.nrows");
+    ptiCheckError(X.shape(cpu)[mode] != ncols, ERR_SHAPE_MISMATCH, "X.shape[mode] != U.ncols");
 
     std::unique_ptr<size_t[]> sort_order(new size_t [nspmodes]);
     for(size_t m = 0, i = 0; m < nspmodes; ++m) {
@@ -64,7 +64,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
         if(m != mode) {
             Y_shape[m] = X.shape(cpu)[m];
         } else {
-            Y_shape[m] = ncols;
+            Y_shape[m] = nrows;
         }
     }
     bool const* X_is_dense = X.is_dense(cpu);
@@ -103,20 +103,20 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
         // j is chunk-level on X,
         // for each Y[i] corresponds to all X[j]
         for(size_t j = inz_begin; j < inz_end; ++j) {
-            size_t r = X_indices_m[j];
+            size_t c = X_indices_m[j];
             // We will cut a chunk on Y into several subchunks,
             // a subchunk in Y corresponds to a chunk in X
-            for(size_t c = 0; c < Y_num_subchunks; ++c) {
+            for(size_t r = 0; r < Y_num_subchunks; ++r) {
                 // Iterate elements from each subchunk in Y
                 for(size_t k = 0; k < Y_subchunk_size; ++k) {
                     /*
-                    Y.offset_to_indices(idxY.get(), i * Y.chunk_size + c * Y_subchunk_size + k);
+                    Y.offset_to_indices(idxY.get(), i * Y.chunk_size + r * Y_subchunk_size + k);
                     X.offset_to_indices(idxX.get(), j * X.chunk_size + k);
-                    U.offset_to_indices(idxU.get(), r * Ustride + c);
+                    U.offset_to_indices(idxU.get(), c * Ustride + r);
                     std::fprintf(stderr, "Y[%s] += X[%s] * U[%s]\n", array_to_string(idxY.get(), nmodes).c_str(), array_to_string(idxX.get(), nmodes).c_str(), array_to_string(idxU.get(), nmodes).c_str());
                     */
 
-                    Y_values[i * Y.chunk_size + c * Y_subchunk_size + k] += X_values[j * X.chunk_size + k] * U_values[r * Ustride + c];
+                    Y_values[i * Y.chunk_size + r * Y_subchunk_size + k] += X_values[j * X.chunk_size + k] * U_values[r * Ustride + c];
                 }
             }
         }
