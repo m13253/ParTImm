@@ -82,7 +82,7 @@ int main(int argc, char const* argv[]) {
 
     std::printf("Y = tucker_decomposition(X, [%s], [%s]);\n", array_to_string(R.get(), X.nmodes).c_str(), array_to_string(dimorder.get(), X.nmodes).c_str());
 
-    SparseTensor Y = tucker_decomposition(X, R.get(), dimorder.get(), *cuda_device);
+    SparseTensor Y = tucker_decomposition(X, R.get(), dimorder.get(), cuda_device);
 
     std::printf("Y = %s\n", Y.to_string(!dense_format, limit).c_str());
 

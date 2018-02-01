@@ -25,10 +25,23 @@ endif()
 if(USE_OpenBLAS)
     find_package(OpenBLAS REQUIRED)
     add_definitions(-DPARTI_USE_OpenBLAS)
+    add_definitions(-DPARTI_USE_CBLAS)
+    add_definitions(-DPARTI_USE_LAPACKE)
     include_directories(${OpenBLAS_INCLUDE_DIRS})
     link_libraries(${OpenBLAS_LIBRARIES})
 endif()
-if(USE_LAPACKE)
+if(USE_CBLAS AND NOT USE_OpenBLAS)
+    find_library(
+        CBLAS_LIBRARIES
+        NAMES cblas
+        PATHS ${LAPACKE_DIR}
+    )
+    add_definitions(-DPARTI_USE_CBLAS)
+    get_filename_component(CBLAS_LIBDIR "${CBLAS_LIBRARIES}" DIRECTORY)
+    include_directories("${CBLAS_LIBDIR}/../include")
+    link_libraries(${CBLAS_LIBRARIES})
+endif()
+if(USE_LAPACKE AND NOT USE_OpenBLAS)
     find_library(
         LAPACKE_LIBRARIES
         NAMES lapacke
@@ -38,18 +51,6 @@ if(USE_LAPACKE)
     get_filename_component(LAPACKE_LIBDIR "${LAPACKE_LIBRARIES}" DIRECTORY)
     include_directories("${LAPACKE_LIBDIR}/../include")
     link_libraries(${LAPACKE_LIBRARIES})
-endif()
-if(USE_MAGMA)
-    find_library(
-        MAGMA_LIBRARIES
-        NAMES magma
-        PATHS ${MAGMA_DIR}
-        NO_DEFAULT_PATH
-    )
-    add_definitions(-DPARTI_USE_MAGMA)
-    get_filename_component(MAGMA_LIBDIR "${MAGMA_LIBRARIES}" DIRECTORY)
-    include_directories("${MAGMA_LIBDIR}/../include")
-    link_libraries(${MAGMA_LIBRARIES})
 endif()
 if(USE_MKL)
     find_package(MKL REQUIRED)

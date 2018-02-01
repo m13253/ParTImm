@@ -71,7 +71,7 @@ Tensor nvecs(
     SparseTensor& t,
     size_t        n,
     size_t        r,
-    CudaDevice&   cuda_device
+    Device*       device
 ) {
 
     Tensor tm = unfold(t, n);
@@ -80,7 +80,7 @@ Tensor nvecs(
 
     Tensor u, s;
 
-    svd(&u, false, s, nullptr, false, tm, cuda_device);
+    svd(&u, false, s, nullptr, false, tm, device);
 
     //std::fprintf(stderr, "svd(unfold(t)).U = %s\n", u.to_string(false).c_str());
 
@@ -107,7 +107,7 @@ SparseTensor tucker_decomposition(
     SparseTensor&   X,
     size_t const    R[],
     size_t const    dimorder[],
-    CudaDevice&     cuda_device,
+    Device*         device,
     double          tol,
     unsigned        maxiters
 ) {
@@ -124,7 +124,7 @@ SparseTensor tucker_decomposition(
         U_shape[1] = X.shape(cpu)[n];
         U[n].reset(2, U_shape);
         //uniform_random_fill_matrix(U[n]);
-        U[n] = nvecs(X, n, R[n], cuda_device);
+        U[n] = nvecs(X, n, R[n], device);
     }
     SparseTensor core;
 
@@ -146,7 +146,7 @@ SparseTensor tucker_decomposition(
             }
             std::fprintf(stderr, "Utilde = %s\n", Utilde->to_string(false).c_str());
             // Mode n is sparse, while other modes are dense
-            U[n] = nvecs(*Utilde, n, R[n], cuda_device);
+            U[n] = nvecs(*Utilde, n, R[n], device);
             std::fprintf(stderr, "U[%zu] = %s\n", n, U[n].to_string(false).c_str());
         }
 

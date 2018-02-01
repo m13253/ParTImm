@@ -28,7 +28,9 @@ enum ErrCode {
     ERR_SHAPE_MISMATCH = 3,
     ERR_VALUE_ERROR    = 4,
     ERR_ZERO_DIVISION  = 5,
-    ERR_CUDA_LIBRARY   = 6,
+    ERR_BLAS_LIBRARY   = 6,
+    ERR_LAPACK_LIBRARY = 7,
+    ERR_CUDA_LIBRARY   = 8,
 };
 
 }

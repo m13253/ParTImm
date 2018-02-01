@@ -29,6 +29,14 @@
 #include <ParTI/tensor.hpp>
 #include <ParTI/utils.hpp>
 
+#ifdef PARTI_USE_CBLAS
+#include <cblas.h>
+#endif
+
+#ifdef PARTI_USE_LAPACKE
+#include <lapacke.h>
+#endif
+
 #ifdef PARTI_USE_CUDA
 #include <cuda_runtime_api.h>
 #include <cublas.h>
@@ -59,10 +67,8 @@ void transpose_matrix(
     Tensor& X,
     bool do_transpose,
     bool want_fortran_style,
-    CudaDevice& cuda_device
+    Device *device
 ) {
-
-#ifdef PARTI_USE_CUDA
 
     ptiCheckError(sizeof (Scalar) != sizeof (float), ERR_BUILD_CONFIG, "Scalar != float");
 
@@ -82,45 +88,81 @@ void transpose_matrix(
     size_t* strides = X.strides(cpu);
 
     if(do_transpose != (currently_fortran_style != want_fortran_style)) {
-        cublasHandle_t handle = (cublasHandle_t) cuda_device.GetCublasHandle();
-        cublasStatus_t status;
-
         size_t m = shape[storage_order[0]]; // Result rows
         size_t n = shape[storage_order[1]]; // Result cols
         size_t ldm = ceil_div<size_t>(m, 8) * 8;
         size_t ldn = strides[storage_order[1]];
+        MemBlock<Scalar[]> result_matrix;
+        result_matrix.allocate(device->mem_node, n * ldm);
 
-        MemBlock<float[]> result_matrix;
-        result_matrix.allocate(cuda_device.mem_node, n * ldm);
+        if(CudaDevice* cuda_device = dynamic_cast<CudaDevice *>(device)) {
 
-        status = cublasSetPointerMode(
-            handle,
-            CUBLAS_POINTER_MODE_HOST
-        );
-        ptiCheckError(status, ERR_CUDA_LIBRARY, "cuBLAS error");
+#ifdef PARTI_USE_CUDA
 
-        float const alpha = 1;
-        float const beta = 0;
-        status = cublasSgeam(
-            handle,                                 // handle
-            CUBLAS_OP_T,                            // transa
-            CUBLAS_OP_N,                            // transb
-            m,                                      // m
-            n,                                      // n
-            &alpha,                                 // alpha
-            X.values(cuda_device.mem_node),         // A
-            ldn,                                    // lda
-            &beta,                                  // beta
-            nullptr,                                // B
-            ldm,                                    // ldb
-            result_matrix(cuda_device.mem_node),    // C
-            ldm                                     // ldc
-        );
-        ptiCheckError(status, ERR_CUDA_LIBRARY, "cuBLAS error");
+            cublasHandle_t handle = (cublasHandle_t) cuda_device->GetCublasHandle();
 
-        cudaSetDevice(cuda_device.cuda_device);
-        cudaDeviceSynchronize();
+            cublasStatus_t status = cublasSetPointerMode(
+                handle,
+                CUBLAS_POINTER_MODE_HOST
+            );
+            ptiCheckError(status, ERR_CUDA_LIBRARY, "cuBLAS error");
 
+            Scalar const alpha = 1;
+            Scalar const beta = 0;
+            status = cublasSgeam(
+                handle,                             // handle
+                CUBLAS_OP_T,                        // transa
+                CUBLAS_OP_N,                        // transb
+                m,                                  // m
+                n,                                  // n
+                &alpha,                             // alpha
+                X.values(device->mem_node),         // A
+                ldn,                                // lda
+                &beta,                              // beta
+                nullptr,                            // B
+                ldm,                                // ldb
+                result_matrix(device->mem_node),    // C
+                ldm                                 // ldc
+            );
+            ptiCheckError(status, ERR_CUDA_LIBRARY, "cuBLAS error");
+
+            cudaSetDevice(cuda_device->cuda_device);
+            cudaDeviceSynchronize();
+
+#else
+
+            ptiCheckError(true, ERR_BUILD_CONFIG, "CUDA not enabled");
+#endif
+
+        } else {
+
+#ifdef PARTI_USE_OPENBLAS
+
+            cblas_somatcopy(
+                CblasColMajor,                          // CORDER
+                CblasTrans,                             // CTRANS
+                n,                                      // crows
+                m,                                      // ccols
+                1,                                      // calpha
+                X.values(device->mem_node),             // a
+                ldn,                                    // clda
+                result_matrix(device->mem_node),        // b
+                m                                       // cldb
+            );
+
+#else
+
+            Scalar *result_matrix_values = result_matrix(device->mem_node);
+            const Scalar *X_values = X.values(device->mem_node);
+            for(size_t i = 0; i < n; ++i) {
+                for(size_t j = 0; j < m; ++j) {
+                    result_matrix_values[i * ldm + j] = X_values[j * ldn + i];
+                }
+            }
+
+#endif
+
+        }
         X.values = std::move(result_matrix);
     }
 
@@ -137,16 +179,6 @@ void transpose_matrix(
         storage_order[1] = 1;
     }
 
-#else
-
-    unused_param(X);
-    unused_param(do_transpose);
-    unused_param(want_fortran_style);
-    unused_param(cuda_device);
-    ptiCheckError(true, ERR_BUILD_CONFIG, "CUDA not enabled");
-
-#endif
-
 }
 
 }
@@ -158,20 +190,15 @@ void svd(
     Tensor* V,
     bool V_want_transpose,
     Tensor& X,
-    CudaDevice& cuda_device
+    Device* device
 ) {
 
-#ifdef PARTI_USE_CUDA
-
     ptiCheckError(sizeof (Scalar) != sizeof (float), ERR_BUILD_CONFIG, "Scalar != float");
-
-    cusolverDnHandle_t handle = (cusolverDnHandle_t) cuda_device.GetCusolverDnHandle();
-    cusolverStatus_t status;
 
     size_t const* X_shape = X.shape(cpu);
 
     bool X_transposed = X_shape[0] < X_shape[1];
-    transpose_matrix(X, X_transposed, true, cuda_device);
+    transpose_matrix(X, X_transposed, true, device);
     if(X_transposed) {
         std::swap(U, V);
         std::swap(U_want_transpose, V_want_transpose);
@@ -185,15 +212,6 @@ void svd(
     assert(svd_m >= 1);
     assert(svd_lda >= svd_m);
     assert(svd_n >= 1);
-
-    int svd_work_size;
-    status = cusolverDnSgesvd_bufferSize(
-        handle,                                // handle
-        svd_m,                                 // m
-        svd_n,                                 // n
-        &svd_work_size                         // lwork
-    );
-    ptiCheckError(status, ERR_CUDA_LIBRARY, "cuSOLVER error");
 
     if(U != nullptr) {
         init_matrix(*U, svd_m, svd_m, true, true);
@@ -210,59 +228,99 @@ void svd(
     assert(svd_ldvt >= svd_n);
     assert(svd_ldvt >= 1);
 
-    MemBlock<Scalar[]> svd_work;
-    svd_work.allocate(cuda_device.mem_node, svd_work_size);
-    MemBlock<Scalar[]> svd_rwork;
-    svd_rwork.allocate(cuda_device.mem_node, std::min(svd_m, svd_n) - 1);
-    MemBlock<int> svd_devInfo;
-    svd_devInfo.allocate(cuda_device.mem_node);
+    if(CudaDevice *cuda_device = dynamic_cast<CudaDevice *>(device)) {
 
-    status = cusolverDnSgesvd(
-        handle,                                // handle
-        U ? 'A' : 'N',                         // jobu
-        V ? 'A' : 'N',                         // jobvt
-        svd_m,                                 // m
-        svd_n,                                 // n
-        X.values(cuda_device.mem_node),        // A
-        svd_lda,                               // lda (lda >= max(1, m))
-        S.values(cuda_device.mem_node),        // S
-        U ? U->values(cuda_device.mem_node) : nullptr,      // U
-        svd_ldu,                               // ldu
-        V ? V->values(cuda_device.mem_node) : nullptr,      // VT
-        svd_ldvt,                              // ldvt
-        svd_work(cuda_device.mem_node),        // work
-        svd_work_size,                         // lwork
-        svd_rwork(cuda_device.mem_node),       // rwork
-        svd_devInfo(cuda_device.mem_node)      // devInfo
-    );
-    ptiCheckError(status, ERR_CUDA_LIBRARY, "cuSOLVER error");
+#ifdef PARTI_USE_CUDA
 
-    cudaSetDevice(cuda_device.cuda_device);
-    cudaDeviceSynchronize();
+        cusolverDnHandle_t handle = (cusolverDnHandle_t) cuda_device->GetCusolverDnHandle();
+        cusolverStatus_t status;
 
-    int svd_devInfo_value = *svd_devInfo(cpu);
-    ptiCheckError(svd_devInfo_value != 0, ERR_CUDA_LIBRARY, ("devInfo = " + std::to_string(svd_devInfo_value)).c_str());
+        int svd_work_size;
+        status = cusolverDnSgesvd_bufferSize(
+            handle,                                // handle
+            svd_m,                                 // m
+            svd_n,                                 // n
+            &svd_work_size                         // lwork
+        );
+        ptiCheckError(status, ERR_CUDA_LIBRARY, "cuSOLVER error");
 
-    if(U != nullptr) {
-        transpose_matrix(*U, U_want_transpose != X_transposed, false, cuda_device);
-    }
-    if(V != nullptr) {
-        transpose_matrix(*V, V_want_transpose == X_transposed, false, cuda_device);
-    }
+        MemBlock<Scalar[]> svd_work;
+        svd_work.allocate(device->mem_node, svd_work_size);
+        MemBlock<Scalar[]> svd_rwork;
+        svd_rwork.allocate(device->mem_node, std::min(svd_m, svd_n) - 1);
+        MemBlock<int> svd_devInfo;
+        svd_devInfo.allocate(device->mem_node);
+
+        status = cusolverDnSgesvd(
+            handle,                                     // handle
+            U ? 'A' : 'N',                              // jobu
+            V ? 'A' : 'N',                              // jobvt
+            svd_m,                                      // m
+            svd_n,                                      // n
+            X.values(device->mem_node),                 // A
+            svd_lda,                                    // lda (lda >= max(1, m))
+            S.values(device->mem_node),                 // S
+            U ? U->values(device->mem_node) : nullptr,  // U
+            svd_ldu,                                    // ldu
+            V ? V->values(device->mem_node) : nullptr,  // VT
+            svd_ldvt,                                   // ldvt
+            svd_work(device->mem_node),                 // work
+            svd_work_size,                              // lwork
+            svd_rwork(device->mem_node),                // rwork
+            svd_devInfo(device->mem_node)               // devInfo
+        );
+        ptiCheckError(status, ERR_CUDA_LIBRARY, "cuSOLVER error");
+
+        cudaSetDevice(cuda_device->cuda_device);
+        cudaDeviceSynchronize();
+
+        int svd_devInfo_value = *svd_devInfo(cpu);
+        ptiCheckError(svd_devInfo_value != 0, ERR_CUDA_LIBRARY, ("devInfo = " + std::to_string(svd_devInfo_value)).c_str());
 
 #else
 
-    unused_param(U);
-    unused_param(U_want_transpose);
-    unused_param(S);
-    unused_param(V);
-    unused_param(V_want_transpose);
-    unused_param(X);
-    unused_param(cuda_device);
-    ptiCheckError(true, ERR_BUILD_CONFIG, "CUDA not enabled");
+        ptiCheckError(true, ERR_BUILD_CONFIG, "CUDA not enabled");
 
 #endif
 
+    } else {
+
+#ifdef PARTI_USE_LAPACKE
+
+        MemBlock<Scalar[]> svd_superb;
+        svd_superb.allocate(device->mem_node, std::min(svd_m, svd_n) - 1);
+
+        lapack_int status = LAPACKE_sgesvd(
+            LAPACK_COL_MAJOR,                           // matrix_layout
+            U ? 'A' : 'N',                              // jobu
+            V ? 'A' : 'N',                              // jobvt
+            svd_m,                                      // m
+            svd_n,                                      // n
+            X.values(device->mem_node),                 // a
+            svd_lda,                                    // lda
+            S.values(device->mem_node),                 // s
+            U ? U->values(device->mem_node) : nullptr,  // U
+            svd_ldu,                                    // ldu
+            V ? V->values(device->mem_node) : nullptr,  // VT
+            svd_ldvt,                                   // ldvt
+            svd_superb(device->mem_node)                // superb
+        );
+        ptiCheckError(status, ERR_LAPACK_LIBRARY, "LAPACKE error");
+
+#else
+
+        ptiCheckError(true, ERR_BUILD_CONFIG, "LAPACKE not enabled");
+
+#endif
+
+    }
+
+    if(U != nullptr) {
+        transpose_matrix(*U, U_want_transpose != X_transposed, false, device);
+    }
+    if(V != nullptr) {
+        transpose_matrix(*V, V_want_transpose == X_transposed, false, device);
+    }
 }
 
 }

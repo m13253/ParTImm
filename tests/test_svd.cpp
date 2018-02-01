@@ -74,7 +74,7 @@ int main(int argc, char const* argv[]) {
         no_u ? nullptr : &U, false,
         S,
         no_v ? nullptr : &V, false,
-        X, *cuda_device
+        X, cuda_device
     );
 
     if(!no_u) {
