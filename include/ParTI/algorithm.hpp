@@ -60,11 +60,17 @@ void svd(
     Device* device
 );
 
+enum tucker_decomposition_init_type {
+    TUCKER_INIT_NVECS,
+    TUCKER_INIT_RANDOM,
+};
+
 SparseTensor tucker_decomposition(
     SparseTensor& X,
     size_t const R[],
     size_t const dimorder[],
     Device* device,
+    enum tucker_decomposition_init_type init = TUCKER_INIT_NVECS,
     double tol = 1.0e-4,
     unsigned maxiters = 50
 );

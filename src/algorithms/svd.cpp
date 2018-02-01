@@ -95,7 +95,7 @@ void transpose_matrix(
         MemBlock<Scalar[]> result_matrix;
         result_matrix.allocate(device->mem_node, n * ldm);
 
-        if(CudaDevice* cuda_device = dynamic_cast<CudaDevice *>(device)) {
+        if(CudaDevice *cuda_device = dynamic_cast<CudaDevice *>(device)) {
 
 #ifdef PARTI_USE_CUDA
 
@@ -134,7 +134,7 @@ void transpose_matrix(
             ptiCheckError(true, ERR_BUILD_CONFIG, "CUDA not enabled");
 #endif
 
-        } else {
+        } else if(dynamic_cast<CpuDevice *>(device) != nullptr) {
 
 #ifdef PARTI_USE_OPENBLAS
 
@@ -162,7 +162,10 @@ void transpose_matrix(
 
 #endif
 
+        } else {
+            ptiCheckError(true, ERR_VALUE_ERROR, "Invalid device type");
         }
+
         X.values = std::move(result_matrix);
     }
 
@@ -283,7 +286,7 @@ void svd(
 
 #endif
 
-    } else {
+    } else if(dynamic_cast<CpuDevice *>(device) != nullptr) {
 
 #ifdef PARTI_USE_LAPACKE
 
@@ -313,6 +316,8 @@ void svd(
 
 #endif
 
+    } else {
+        ptiCheckError(true, ERR_VALUE_ERROR, "Invalid device type");
     }
 
     if(U != nullptr) {

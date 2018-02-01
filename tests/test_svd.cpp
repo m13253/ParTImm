@@ -56,10 +56,13 @@ int main(int argc, char const* argv[]) {
     }
 
     session.print_devices();
-    CudaDevice* cuda_device = dynamic_cast<CudaDevice*>(session.devices[device]);
-
-    if(cuda_device == nullptr) {
-        std::fprintf(stderr, "Please specify a CUDA computing device with --dev\n\n");
+    Device* dev = session.devices[device];
+    if(dynamic_cast<CudaDevice*>(dev) != nullptr) {
+        std::printf("Using CUDA for calculation.");
+    } else if(dynamic_cast<CpuDevice*>(dev) != nullptr) {
+        std::printf("Using CPU for calculation.");
+    } else {
+        std::printf("Unknown device type.");
         return 1;
     }
 
@@ -74,7 +77,7 @@ int main(int argc, char const* argv[]) {
         no_u ? nullptr : &U, false,
         S,
         no_v ? nullptr : &V, false,
-        X, cuda_device
+        X, dev
     );
 
     if(!no_u) {

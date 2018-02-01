@@ -108,6 +108,7 @@ SparseTensor tucker_decomposition(
     size_t const    R[],
     size_t const    dimorder[],
     Device*         device,
+    enum tucker_decomposition_init_type init,
     double          tol,
     unsigned        maxiters
 ) {
@@ -123,8 +124,11 @@ SparseTensor tucker_decomposition(
         U_shape[0] = R[n];
         U_shape[1] = X.shape(cpu)[n];
         U[n].reset(2, U_shape);
-        //uniform_random_fill_matrix(U[n]);
-        U[n] = nvecs(X, n, R[n], device);
+        if(init == TUCKER_INIT_NVECS) {
+            U[n] = nvecs(X, n, R[n], device);
+        } else {
+            uniform_random_fill_matrix(U[n]);
+        }
     }
     SparseTensor core;
 
