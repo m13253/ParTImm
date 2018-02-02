@@ -5,7 +5,7 @@ option(BUILD_STATIC "Build static library" ON)
 option(BUILD_SHARED "Build shared library" ON)
 
 option(USE_CUDA "Use NVIDIA CUDA library" ON)
-option(USE_OpenBLAS "Use OpenBLAS library" OFF)
+option(USE_OPENBLAS "Use OpenBLAS library" OFF)
 option(USE_LAPACKE "Use LAPACKE library" OFF)
 option(USE_MAGMA "Use MAGMA library" OFF)
 option(USE_MKL "Use Intel MKL library" OFF)
@@ -22,15 +22,15 @@ endif()
 
 # A bug in FindCUDA module forces us to put "link_libraries" before "cuda_add_library".
 # So we cannot use "target_link_libraries" for target-wise library tracking.
-if(USE_OpenBLAS)
+if(USE_OPENBLAS)
     find_package(OpenBLAS REQUIRED)
-    add_definitions(-DPARTI_USE_OpenBLAS)
+    add_definitions(-DPARTI_USE_OPENBLAS)
     add_definitions(-DPARTI_USE_CBLAS)
     add_definitions(-DPARTI_USE_LAPACKE)
     include_directories(${OpenBLAS_INCLUDE_DIRS})
     link_libraries(${OpenBLAS_LIBRARIES})
 endif()
-if(USE_CBLAS AND NOT USE_OpenBLAS)
+if(USE_CBLAS AND NOT USE_OPENBLAS)
     find_library(
         CBLAS_LIBRARIES
         NAMES cblas
@@ -41,7 +41,7 @@ if(USE_CBLAS AND NOT USE_OpenBLAS)
     include_directories("${CBLAS_LIBDIR}/../include")
     link_libraries(${CBLAS_LIBRARIES})
 endif()
-if(USE_LAPACKE AND NOT USE_OpenBLAS)
+if(USE_LAPACKE AND NOT USE_OPENBLAS)
     find_library(
         LAPACKE_LIBRARIES
         NAMES lapacke

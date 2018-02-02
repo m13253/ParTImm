@@ -58,11 +58,11 @@ int main(int argc, char const* argv[]) {
     session.print_devices();
     Device* dev = session.devices[device];
     if(dynamic_cast<CudaDevice*>(dev) != nullptr) {
-        std::printf("Using CUDA for calculation.");
+        std::printf("Using CUDA for calculation.\n");
     } else if(dynamic_cast<CpuDevice*>(dev) != nullptr) {
-        std::printf("Using CPU for calculation.");
+        std::printf("Using CPU for calculation.\n");
     } else {
-        std::printf("Unknown device type.");
+        std::printf("Unknown device type.\n");
         return 1;
     }
 

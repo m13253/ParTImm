@@ -147,7 +147,7 @@ void transpose_matrix(
                 X.values(device->mem_node),             // a
                 ldn,                                    // clda
                 result_matrix(device->mem_node),        // b
-                m                                       // cldb
+                ldm                                     // cldb
             );
 
 #else
