@@ -38,6 +38,13 @@ SparseTensor tensor_times_matrix_omp(
     size_t mode
 );
 
+void transpose_matrix_inplace(
+    Tensor& X,
+    bool do_transpose,
+    bool want_fortran_style,
+    Device *device
+);
+
 Tensor unfold(
     SparseTensor& X,
     size_t mode

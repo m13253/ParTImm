@@ -18,16 +18,48 @@
 
 #include <ParTI/sptensor.hpp>
 #include <cmath>
+#include <cstring>
+#include <memory>
 
 namespace pti {
 
 double SparseTensor::norm() {
     double sqnorm = 0;
-    Scalar* values = this->values(cpu);
-    for(size_t i = 0; i < num_chunks * chunk_size; ++i) {
-        double cell_value = values[i];
-        sqnorm += cell_value * cell_value;
+    Scalar *values = this->values(cpu);
+    size_t *shape = this->shape(cpu);
+    size_t num_dense_order = this->dense_order.size();
+
+    if(num_dense_order == 0) {
+        // Fully sparse
+        for(size_t i = 0; i < num_chunks; ++i) {
+            double cell_value = values[i * chunk_size];
+            sqnorm += cell_value * cell_value;
+        }
+    } else {
+        size_t *dense_order = this->dense_order(cpu);
+        std::unique_ptr<size_t []> coord(new size_t [num_dense_order]);
+
+        for(size_t i = 0; i < num_chunks; ++i) {
+            std::memset(coord.get(), 0, nmodes * sizeof (size_t));
+            for(;;) {
+                for(size_t m = num_dense_order - 1; m != 0; --m) {
+                    if(coord[m] >= shape[dense_order[m]]) {
+                        coord[m] = 0;
+                        ++coord[m - 1];
+                    } else {
+                        break;
+                    }
+                }
+                if(coord[0] >= shape[dense_order[0]]) {
+                    break;
+                }
+                double cell_value = values[i * chunk_size + indices_to_intra_offset(coord.get())];
+                sqnorm += cell_value * cell_value;
+                ++coord[num_dense_order - 1];
+            }
+        }
     }
+
     return std::sqrt(sqnorm);
 }
 

@@ -34,6 +34,7 @@ Tensor unfold(
     SparseTensor& X,
     size_t mode
 ) {
+    std::printf("unfold(%s)\n", X.to_string(false).c_str());
     ptiCheckError(X.is_dense(cpu)[mode] != false, ERR_SHAPE_MISMATCH, "X.is_dense[mode] != false");
     ptiCheckError(X.sparse_order.size() != 1, ERR_SHAPE_MISMATCH, "X.sparse_order.size() != 1")
 

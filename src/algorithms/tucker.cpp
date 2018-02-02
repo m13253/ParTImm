@@ -76,13 +76,13 @@ Tensor nvecs(
 
     Tensor tm = unfold(t, n);
 
-    //std::fprintf(stderr, "unfold(t, %zu) = %s\n", n, tm.to_string(false).c_str());
+    std::fprintf(stderr, "unfold(t, %zu) = %s\n", n, tm.to_string(false).c_str());
 
     Tensor u, s;
 
     svd(&u, false, s, nullptr, false, tm, device);
 
-    //std::fprintf(stderr, "svd(unfold(t)).U = %s\n", u.to_string(false).c_str());
+    std::fprintf(stderr, "svd(unfold(t)).U = %s\n", u.to_string(false).c_str());
 
     size_t const result_shape[2] = { t.shape(cpu)[n], r };
     Tensor result(2, result_shape);
@@ -124,7 +124,7 @@ SparseTensor tucker_decomposition(
         U_shape[0] = R[n];
         U_shape[1] = X.shape(cpu)[n];
         U[n].reset(2, U_shape);
-        if(init == TUCKER_INIT_NVECS) {
+        if(false && init == TUCKER_INIT_NVECS) {
             U[n] = nvecs(X, n, R[n], device);
         } else {
             uniform_random_fill_matrix(U[n]);
@@ -151,6 +151,7 @@ SparseTensor tucker_decomposition(
             std::fprintf(stderr, "Utilde = %s\n", Utilde->to_string(false).c_str());
             // Mode n is sparse, while other modes are dense
             U[n] = nvecs(*Utilde, n, R[n], device);
+            transpose_matrix_inplace(U[n], true, false, device);
             std::fprintf(stderr, "U[%zu] = %s\n", n, U[n].to_string(false).c_str());
         }
 
