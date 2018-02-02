@@ -76,13 +76,13 @@ Tensor nvecs(
 
     Tensor tm = unfold(t, n);
 
-    std::fprintf(stderr, "unfold(t, %zu) = %s\n", n, tm.to_string(false).c_str());
+    //std::fprintf(stderr, "unfold(t, %zu) = %s\n", n, tm.to_string(false).c_str());
 
     Tensor u, s;
 
     svd(&u, false, s, nullptr, false, tm, device);
 
-    std::fprintf(stderr, "svd(unfold(t)).U = %s\n", u.to_string(false).c_str());
+    //std::fprintf(stderr, "svd(unfold(t)).U = %s\n", u.to_string(false).c_str());
 
     size_t const result_shape[2] = { t.shape(cpu)[n], r };
     Tensor result(2, result_shape);
@@ -156,6 +156,7 @@ SparseTensor tucker_decomposition(
         }
 
         core = tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1]);
+        std::fprintf(stderr, "core = %s\n", core.to_string(false).c_str());
 
         double normCore = core.norm();
         double normResidual = std::sqrt(normX * normX - normCore * normCore);

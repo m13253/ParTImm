@@ -75,6 +75,12 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
     }
 
     SparseTensor Y(nmodes, Y_shape.get(), Y_is_dense.get());
+    size_t* X_dense_order = X.dense_order(cpu);
+    size_t* Y_dense_order = Y.dense_order(cpu);
+    for(size_t m = 0; m < Y.dense_order.size() - 1; ++m) {
+        Y_dense_order[m] = X_dense_order[m];
+    }
+    Y_dense_order[Y.dense_order.size() - 1] = mode;
     Y.sort_index(sort_order.get());
 
     std::vector<size_t> fiberidx;

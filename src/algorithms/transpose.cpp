@@ -17,6 +17,7 @@
 */
 
 #include <ParTI/algorithm.hpp>
+#include <cassert>
 #include <utility>
 #include <ParTI/device.hpp>
 #include <ParTI/errcode.hpp>
@@ -73,6 +74,9 @@ void transpose_matrix_inplace(
 
 #ifdef PARTI_USE_CUDA
 
+            cudaSetDevice(cuda_device->cuda_device);
+            cudaMemset(result_matrix(device->mem_node), 0, n * ldm * sizeof (Scalar));
+
             cublasHandle_t handle = (cublasHandle_t) cuda_device->GetCublasHandle();
 
             cublasStatus_t status = cublasSetPointerMode(
@@ -110,6 +114,8 @@ void transpose_matrix_inplace(
 
         } else if(dynamic_cast<CpuDevice *>(device) != nullptr) {
 
+            memset(result_matrix(device->mem_node), 0, n * ldm * sizeof (Scalar));
+
 #ifdef PARTI_USE_OPENBLAS
 
             cblas_somatcopy(
@@ -140,13 +146,13 @@ void transpose_matrix_inplace(
             ptiCheckError(true, ERR_VALUE_ERROR, "Invalid device type");
         }
 
-        strides[storage_order[0]] = ldn;
-        strides[storage_order[1]] = ldm;
+        strides[storage_order[0]] = ldm;
         X.values = std::move(result_matrix);
     }
 
     if(do_transpose) {
         std::swap(shape[0], shape[1]);
+        std::swap(strides[0], strides[1]);
     }
 
     if(want_fortran_style) {
@@ -156,6 +162,9 @@ void transpose_matrix_inplace(
         storage_order[0] = 0;
         storage_order[1] = 1;
     }
+
+    assert(strides[0] >= shape[0]);
+    assert(strides[1] >= shape[1]);
 
 }
 

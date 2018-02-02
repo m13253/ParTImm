@@ -22,6 +22,7 @@
 #include <vector>
 #include <ParTI/error.hpp>
 #include <ParTI/sptensor.hpp>
+#include <ParTI/utils.hpp>
 
 namespace pti {
 
