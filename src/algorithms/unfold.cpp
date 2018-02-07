@@ -52,7 +52,7 @@ Tensor unfold(
 
     std::unique_ptr<size_t[]> coordinate(new size_t [X.nmodes]);
 
-    for(size_t i = 0; i < nrows; ++i) {
+    for(size_t i = 0; i < X.num_chunks; ++i) {
         size_t row = X.indices[mode](cpu)[i];
         size_t col = 0;
         std::memset(coordinate.get(), 0, X.nmodes * sizeof (size_t));

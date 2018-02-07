@@ -46,7 +46,6 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
     size_t ncols = U.shape(cpu)[1];
     size_t Ustride = U.strides(cpu)[1];
 
-    std::printf("nrows = %zu, ncols = %zu, X.shape[%zu] = %zu\n", nrows, ncols, mode, X.shape(cpu)[mode]);
     ptiCheckError(X.shape(cpu)[mode] != ncols, ERR_SHAPE_MISMATCH, "X.shape[mode] != U.ncols");
 
     std::unique_ptr<size_t[]> sort_order(new size_t [nspmodes]);
@@ -122,8 +121,9 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
                     U.offset_to_indices(idxU.get(), r * Ustride + c);
                     std::fprintf(stderr, "Y[%s] += X[%s] * U[%s]\n", array_to_string(idxY.get(), nmodes).c_str(), array_to_string(idxX.get(), nmodes).c_str(), array_to_string(idxU.get(), nmodes).c_str());
                     */
-
-                    Y_values[i * Y.chunk_size + r * Y_subchunk_size + k] += X_values[j * X.chunk_size + k] * U_values[r * Ustride + c];
+                    if(r < nrows && c < ncols) {
+                        Y_values[i * Y.chunk_size + r * Y_subchunk_size + k] += X_values[j * X.chunk_size + k] * U_values[r * Ustride + c];
+                    }
                 }
             }
         }

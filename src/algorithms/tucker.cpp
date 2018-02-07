@@ -143,28 +143,27 @@ SparseTensor tucker_decomposition(
             Utilde = &X;
             for(size_t m = 0; m < N; ++m) {
                 if(m != n) {
-                    std::fprintf(stderr, "Iter %u, n = %zu, m = %zu\n", iter, n, m);
+                    std::fprintf(stderr, "[Tucker Dcomp] Iter %u, n = %zu, m = %zu\n", iter, n, m);
                     Utilde_next = tensor_times_matrix(*Utilde, U[m], m);
                     Utilde = &Utilde_next;
                 }
             }
-            std::fprintf(stderr, "Utilde = %s\n", Utilde->to_string(false).c_str());
+            //std::fprintf(stderr, "Utilde = %s\n", Utilde->to_string(false).c_str());
             // Mode n is sparse, while other modes are dense
             U[n] = nvecs(*Utilde, n, R[n], device);
             transpose_matrix_inplace(U[n], true, false, device);
-            std::fprintf(stderr, "U[%zu] = %s\n", n, U[n].to_string(false).c_str());
+            //std::fprintf(stderr, "U[%zu] = %s\n", n, U[n].to_string(false).c_str());
         }
 
         core = tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1]);
-        std::fprintf(stderr, "core = %s\n", core.to_string(false).c_str());
+        //std::fprintf(stderr, "core = %s\n", core.to_string(false).c_str());
 
         double normCore = core.norm();
         double normResidual = std::sqrt(normX * normX - normCore * normCore);
         fit = 1 - normResidual / normX;
         double fitchange = std::fabs(fitold - fit);
 
-        std::fprintf(stderr, "normX = %g, normCore = %g\n", normX, normCore);
-        std::fprintf(stderr, "fit = %g, fitchange = %g\n", fit, fitchange);
+        std::fprintf(stderr, "[Tucker Dcomp] normX = %g, normCore = %g, fit = %g, fitchange = %g\n", normX, normCore);
 
         if(iter != 0 && fitchange < tol) {
             break;
