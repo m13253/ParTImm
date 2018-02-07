@@ -163,7 +163,7 @@ SparseTensor tucker_decomposition(
         fit = 1 - normResidual / normX;
         double fitchange = std::fabs(fitold - fit);
 
-        std::fprintf(stderr, "[Tucker Dcomp] normX = %g, normCore = %g, fit = %g, fitchange = %g\n", normX, normCore);
+        std::fprintf(stderr, "[Tucker Dcomp] normX = %lg, normCore = %lg, fit = %lg, fitchange = %lg\n", normX, normCore, fit, fitchange);
 
         if(iter != 0 && fitchange < tol) {
             break;
