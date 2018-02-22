@@ -32,6 +32,9 @@ namespace pti {
 
 SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
 
+    Timer timer(cpu);
+    timer.start();
+
     size_t nmodes = X.nmodes;
     size_t nspmodes = X.sparse_order.size();
 
@@ -48,6 +51,9 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
 
     ptiCheckError(X.shape(cpu)[mode] != ncols, ERR_SHAPE_MISMATCH, "X.shape[mode] != U.ncols");
 
+    Timer timer_sort(cpu);
+    timer_sort.start();
+
     std::unique_ptr<size_t[]> sort_order(new size_t [nspmodes]);
     for(size_t m = 0, i = 0; m < nspmodes; ++m) {
         size_t sort_order_mode = X.sparse_order(cpu)[m];
@@ -58,6 +64,9 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
     }
     sort_order[nspmodes - 1] = mode;
     X.sort_index(sort_order.get());
+
+    timer_sort.stop();
+    timer_sort.print_elapsed_time("CPU TTM Sort");
 
     std::unique_ptr<size_t[]> Y_shape(new size_t [nmodes]);
     for(size_t m = 0; m < nmodes; ++m) {
@@ -82,8 +91,14 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
     Y_dense_order[Y.dense_order.size() - 1] = mode;
     Y.sort_index(sort_order.get());
 
+    Timer timer_setidx(cpu);
+    timer_setidx.start();
+
     std::vector<size_t> fiberidx;
     set_semisparse_indices_by_sparse_ref(Y, fiberidx, X, mode);
+
+    timer_setidx.stop();
+    timer_setidx.print_elapsed_time("CPU TTM SetIdx");
 
     Scalar* X_values = X.values(cpu);
     Scalar* Y_values = Y.values(cpu);
@@ -96,8 +111,8 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
     std::unique_ptr<size_t[]> idxU(new size_t[nmodes]);
     */
 
-    Timer timer(cpu);
-    timer.start();
+    Timer timer_kernel(cpu);
+    timer_kernel.start();
 
     size_t Y_subchunk_size = X.chunk_size;
     size_t Y_num_subchunks = Y.strides(cpu)[mode];
@@ -129,8 +144,11 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
         }
     }
 
+    timer_kernel.stop();
+    timer_kernel.print_elapsed_time("CPU TTM Kernel");
+
     timer.stop();
-    timer.print_elapsed_time("CPU TTM Kernel");
+    timer.print_elapsed_time("CPU TTM");
 
     return Y;
 }
