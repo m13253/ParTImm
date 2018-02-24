@@ -28,6 +28,7 @@
 #include <ParTI/memblock.hpp>
 #include <ParTI/sptensor.hpp>
 #include <ParTI/tensor.hpp>
+#include <ParTI/timer.hpp>
 #include <ParTI/utils.hpp>
 
 #ifdef PARTI_USE_CUDA
@@ -132,6 +133,7 @@ SparseTensor tucker_decomposition(
     }
     SparseTensor core;
 
+    std::unique_ptr<size_t []> sort_order(new size_t [N]);
     double fit = 0;
     SparseTensor Utilde_next;
     for(unsigned iter = 0; iter < maxiters; ++iter) {
@@ -140,11 +142,26 @@ SparseTensor tucker_decomposition(
         SparseTensor* Utilde = &X;
         for(size_t ni = 0; ni < N; ++ni) {
             size_t n = dimorder[ni];
+
+            Timer timer_sort(cpu);
+            timer_sort.start();
+            for(size_t m = 0; m < N; ++m) {
+                if(m < n) {
+                    sort_order[N - m - 1] = m;
+                } else if(m != n) {
+                    sort_order[N - m] = m;
+                }
+            }
+            sort_order[0] = n;
+            X.sort_index(sort_order.get());
+            timer_sort.stop();
+            timer_sort.print_elapsed_time("Tucker Sort");
+
             Utilde = &X;
             for(size_t m = 0; m < N; ++m) {
                 if(m != n) {
                     std::fprintf(stderr, "[Tucker Dcomp] Iter %u, n = %zu, m = %zu\n", iter, n, m);
-                    Utilde_next = tensor_times_matrix(*Utilde, U[m], m);
+                    Utilde_next = tensor_times_matrix(*Utilde, U[m], m, true);
                     Utilde = &Utilde_next;
                 }
             }
@@ -155,7 +172,7 @@ SparseTensor tucker_decomposition(
             //std::fprintf(stderr, "U[%zu] = %s\n", n, U[n].to_string(false).c_str());
         }
 
-        core = tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1]);
+        core = tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1], true);
         //std::fprintf(stderr, "core = %s\n", core.to_string(false).c_str());
 
         double normCore = core.norm();
