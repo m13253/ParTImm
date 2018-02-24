@@ -109,6 +109,7 @@ void transpose_matrix_inplace(
 
 #else
 
+            (void) cuda_device;
             ptiCheckError(true, ERR_BUILD_CONFIG, "CUDA not enabled");
 #endif
 
