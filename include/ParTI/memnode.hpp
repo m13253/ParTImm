@@ -20,6 +20,7 @@
 #define PTI_MEMNODE_INCLUDED
 
 #include <cstdlib>
+#include <cstdio>
 #include <new>
 
 namespace pti {
@@ -40,6 +41,7 @@ struct MemNode {
 struct CpuMemNode : public MemNode {
 
     void* malloc(size_t size) {
+        if(size > 1024) { std::fprintf(stderr, "[CpuMemNode] malloc(%.1lf KiB)\n", size / 1024.0); }
         if(size == 0) {
             size = 1;
         }
@@ -51,6 +53,7 @@ struct CpuMemNode : public MemNode {
     }
 
     void* realloc(void* ptr, size_t size) {
+        if(size > 1024) { std::fprintf(stderr, "[CpuMemNode] realloc(%.1lf KiB)\n", size / 1024.0); }
         if(size == 0) {
             size = 1;
         }
