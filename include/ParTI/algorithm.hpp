@@ -29,7 +29,8 @@ namespace pti {
 SparseTensor tensor_times_matrix(
     SparseTensor& X,
     Tensor& U,
-    size_t mode
+    size_t mode,
+    bool skip_sort=false
 );
 
 SparseTensor tensor_times_matrix_omp(

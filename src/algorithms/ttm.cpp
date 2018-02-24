@@ -30,7 +30,7 @@
 
 namespace pti {
 
-SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
+SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode, bool skip_sort) {
 
     Timer timer(cpu);
     timer.start();
@@ -51,22 +51,26 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
 
     ptiCheckError(X.shape(cpu)[mode] != ncols, ERR_SHAPE_MISMATCH, "X.shape[mode] != U.ncols");
 
-    Timer timer_sort(cpu);
-    timer_sort.start();
+    if(skip_sort) {
+        ptiCheckError(X.sparse_order(cpu)[nspmodes - 1] != mode, ERR_SHAPE_MISMATCH, "X.sparse_order[-1] != mode");
+    } else {
+        Timer timer_sort(cpu);
+        timer_sort.start();
 
-    std::unique_ptr<size_t[]> sort_order(new size_t [nspmodes]);
-    for(size_t m = 0, i = 0; m < nspmodes; ++m) {
-        size_t sort_order_mode = X.sparse_order(cpu)[m];
-        if(sort_order_mode != mode) {
-            sort_order[i] = sort_order_mode;
-            ++i;
+        std::unique_ptr<size_t[]> sort_order(new size_t [nspmodes]);
+        for(size_t m = 0, i = 0; m < nspmodes; ++m) {
+            size_t sort_order_mode = X.sparse_order(cpu)[m];
+            if(sort_order_mode != mode) {
+                sort_order[i] = sort_order_mode;
+                ++i;
+            }
         }
-    }
-    sort_order[nspmodes - 1] = mode;
-    X.sort_index(sort_order.get());
+        sort_order[nspmodes - 1] = mode;
+        X.sort_index(sort_order.get());
 
-    timer_sort.stop();
-    timer_sort.print_elapsed_time("CPU TTM Sort");
+        timer_sort.stop();
+        timer_sort.print_elapsed_time("CPU TTM Sort");
+    }
 
     std::unique_ptr<size_t[]> Y_shape(new size_t [nmodes]);
     for(size_t m = 0; m < nmodes; ++m) {
@@ -89,7 +93,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode) {
         Y_dense_order[m] = X_dense_order[m];
     }
     Y_dense_order[Y.dense_order.size() - 1] = mode;
-    Y.sort_index(sort_order.get());
+    Y.sort_index(X.sparse_order(cpu));
 
     Timer timer_setidx(cpu);
     timer_setidx.start();

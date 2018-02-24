@@ -7,5 +7,7 @@
 -DCUDA_HOST_COMPILER=/usr/bin/gcc-5
 
 -DUSE_OPENBLAS=ON
+-DOpenBLAS_DIR=/opt/OpenBLAS/lib/cmake/openblas
+
 -DUSE_CBLAS=OFF
 -DUSE_LAPACKE=OFF
