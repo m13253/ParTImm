@@ -12,6 +12,9 @@ option(USE_MKL "Use Intel MKL library" OFF)
 
 option(CUDA_HOST_COMPILER "CUDA host compiler (gcc < 6.0)" /usr/bin/gcc-5)
 
+set(Backward_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/backward-cpp")
+add_subdirectory("${Backward_DIR}")
+
 if(USE_CUDA)
     find_package(CUDA REQUIRED)
     list(APPEND CUDA_NVCC_FLAGS "-std=c++11" "-D_BITS_FLOATN_H")
