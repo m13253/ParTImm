@@ -30,13 +30,14 @@ SparseTensor tensor_times_matrix(
     SparseTensor& X,
     Tensor& U,
     size_t mode,
-    bool skip_sort=false
+    bool skip_sort = false
 );
 
 SparseTensor tensor_times_matrix_omp(
     SparseTensor& X,
     Tensor& U,
-    size_t mode
+    size_t mode,
+    bool skip_sort = false
 );
 
 void transpose_matrix_inplace(
@@ -61,9 +62,11 @@ void set_semisparse_indices_by_sparse_ref(
 void svd(
     Tensor* U,
     bool U_want_transpose,
+    bool U_want_minimal,
     Tensor& S,
     Tensor* V,
     bool V_want_transpose,
+    bool V_want_minimal,
     Tensor& X,
     Device* device
 );

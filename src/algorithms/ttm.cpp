@@ -31,7 +31,6 @@
 namespace pti {
 
 SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode, bool skip_sort) {
-
     Timer timer(cpu);
     timer.start();
 

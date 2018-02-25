@@ -34,12 +34,15 @@ int main(int argc, char const* argv[]) {
     size_t limit = 10;
     int device = 0;
     bool no_u = false, no_v = false;
+    bool min_u = false, min_v = false;
     ParamDefinition defs[] = {
         { "-l",             PARAM_SIZET,  { &limit } },
         { "--limit",        PARAM_SIZET,  { &limit } },
         { "--dev",          PARAM_INT,    { &device } },
         { "--no-u",         PARAM_BOOL,   { &no_u } },
         { "--no-v",         PARAM_BOOL,   { &no_v } },
+        { "--min-u",        PARAM_BOOL,   { &min_u } },
+        { "--min-v",        PARAM_BOOL,   { &min_v } },
         { ptiEndParamDefinition }
     };
     std::vector<char const*> args = parse_args(argc, argv, defs);
@@ -48,9 +51,11 @@ int main(int argc, char const* argv[]) {
         std::printf("Usage: %s [OPTIONS] X\n\n", argv[0]);
         std::printf("Options:\n");
         std::printf("\t-l, --limit\t\tLimit the number of elements to print [Default: 10].\n");
-        std::printf("\t--dev\t\tCUDA device\n");
+        std::printf("\t--dev\t\tComputing device\n");
         std::printf("\t--no-u\t\tDo not calculate U");
         std::printf("\t--no-v\t\tDo not calculate V");
+        std::printf("\t--min-u\t\tOnly calculate minimal part of U");
+        std::printf("\t--min-v\t\tOnly calculate minimal part of V");
         std::printf("\n");
         return 1;
     }
@@ -74,9 +79,9 @@ int main(int argc, char const* argv[]) {
 
     Tensor U, S, V;
     svd(
-        no_u ? nullptr : &U, false,
+        no_u ? nullptr : &U, false, min_u,
         S,
-        no_v ? nullptr : &V, false,
+        no_v ? nullptr : &V, false, min_v,
         X, dev
     );
 

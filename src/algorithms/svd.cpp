@@ -64,9 +64,11 @@ void init_matrix(
 void svd(
     Tensor* U,
     bool U_want_transpose,
+    bool U_want_minimal,
     Tensor& S,
     Tensor* V,
     bool V_want_transpose,
+    bool V_want_minimal,
     Tensor& X,
     Device* device
 ) {
@@ -80,6 +82,7 @@ void svd(
     if(X_transposed) {
         std::swap(U, V);
         std::swap(U_want_transpose, V_want_transpose);
+        std::swap(U_want_minimal, V_want_minimal);
     }
 
     size_t svd_m = X_shape[0];
@@ -92,7 +95,11 @@ void svd(
     assert(svd_n >= 1);
 
     if(U != nullptr) {
-        init_matrix(*U, svd_m, svd_m, true, true);
+        if(U_want_minimal) {
+            init_matrix(*U, svd_m, svd_n, true, true);
+        } else {
+            init_matrix(*U, svd_m, svd_m, true, true);
+        }
     }
     init_matrix(S, 1, svd_n, false, true);
     if(V != nullptr) {
@@ -131,7 +138,7 @@ void svd(
 
         status = cusolverDnSgesvd(
             handle,                                     // handle
-            U ? 'A' : 'N',                              // jobu
+            U ? U_want_minimal ? 'S' : 'A' : 'N',       // jobu
             V ? 'A' : 'N',                              // jobvt
             svd_m,                                      // m
             svd_n,                                      // n
@@ -171,7 +178,7 @@ void svd(
 
         lapack_int status = LAPACKE_sgesvd(
             LAPACK_COL_MAJOR,                           // matrix_layout
-            U ? 'A' : 'N',                              // jobu
+            U ? U_want_minimal ? 'S' : 'A' : 'N',       // jobu
             V ? 'A' : 'N',                              // jobvt
             svd_m,                                      // m
             svd_n,                                      // n

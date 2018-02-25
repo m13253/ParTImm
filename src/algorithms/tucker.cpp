@@ -81,11 +81,15 @@ Tensor nvecs(
 
     Tensor u, s;
 
-    svd(&u, false, s, nullptr, false, tm, device);
+    svd(&u, false, true, s, nullptr, false, false, tm, device);
+    size_t const* u_shape = u.shape(cpu);
+    size_t u_nrows = u_shape[0];
+    size_t u_ncols = u_shape[1];
+    assert(u_nrows == t.shape(cpu)[n]);
 
     //std::fprintf(stderr, "svd(unfold(t)).U = %s\n", u.to_string(false).c_str());
 
-    size_t const result_shape[2] = { t.shape(cpu)[n], r };
+    size_t const result_shape[2] = { u_nrows, r };
     Tensor result(2, result_shape);
     size_t result_m = result_shape[0];
     size_t result_n = result_shape[1];
@@ -93,7 +97,7 @@ Tensor nvecs(
     size_t u_stride = u.strides(cpu)[1];
 
     for(size_t i = 0; i < result_m; ++i) {
-        for(size_t j = 0; j < result_n; ++j) {
+        for(size_t j = 0; j < std::min(result_n, u_ncols); ++j) {
             result.values(cpu)[i * result_stride + j] = u.values(cpu)[i * u_stride + j];
         }
     }
