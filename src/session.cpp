@@ -69,9 +69,9 @@ void Session::print_devices() const {
     }
     int omp_threads = omp_get_max_threads();
     if(omp_threads != 1) {
-        std::fprintf(stderr, "using %d OpenMP threads.\x1b[21m\n\n", omp_threads);
+        std::fprintf(stderr, "using %d OpenMP threads.\x1b[0m\n\n", omp_threads);
     } else {
-        std::fprintf(stderr, "using %d OpenMP thread.\x1b[21m\n\n", omp_threads);
+        std::fprintf(stderr, "using %d OpenMP thread.\x1b[0m\n\n", omp_threads);
     }
     std::fflush(stderr);
 }
