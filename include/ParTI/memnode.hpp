@@ -86,7 +86,7 @@ struct CpuMemNode : public MemNode {
         }
         profile(ptr, size);
         if(enable_profiling) {
-            std::fprintf(stderr, "[Mem Profile] malloc(%zu),\t%s used, %s max\n", size, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
+            std::fprintf(stderr, "[CpuMemNode] malloc(%zu),\t%s used, %s max\n", size, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
         }
         return ptr;
     }
@@ -103,7 +103,7 @@ struct CpuMemNode : public MemNode {
         profile(ptr, 0);
         profile(newptr, size);
         if(enable_profiling) {
-            std::fprintf(stderr, "[Mem Profile] realloc(..., %zu),\t%s used, %s max\n", size, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
+            std::fprintf(stderr, "[CpuMemNode] realloc(..., %zu),\t%s used, %s max\n", size, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
         }
         return newptr;
     }
