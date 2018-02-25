@@ -73,6 +73,7 @@ void Session::print_devices() const {
     } else {
         std::fprintf(stderr, "using %d OpenMP thread.\x1b[21m\n\n", omp_threads);
     }
+    std::fflush(stderr);
 }
 
 int Session::add_device(Device* device) {
