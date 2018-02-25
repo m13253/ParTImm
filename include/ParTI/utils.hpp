@@ -68,6 +68,23 @@ static inline auto strtonum(Fn fn, const char *str, Args &&...args) -> decltype(
     }
 }
 
+static inline std::string size_to_string(size_t size) {
+    std::ostringstream result;
+    result.precision(1);
+    if(size >= (1 << 30)) {
+        result << std::fixed << (size / double(1 << 30)) << " GiB";
+    } else if(size >= (1 << 20)) {
+        result << std::fixed << (size / double(1 << 20)) << " MiB";
+    } else if(size >= (1 << 10)) {
+        result << std::fixed << (size / double(1 << 10)) << " KiB";
+    } else if(size != 1) {
+        result << size << " bytes";
+    } else {
+        result << "1 byte";
+    }
+    return result.str();
+}
+
 }
 
 #ifdef PATCH_STD_TO_STRING_NOT_FOUND

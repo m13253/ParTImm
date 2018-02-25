@@ -17,11 +17,30 @@
 */
 
 #include <ParTI/memnode.hpp>
+#include <cstdlib>
+#include <cstdio>
 #include <cstring>
 #include <stdexcept>
 #include <ParTI/error.hpp>
 
 namespace pti {
+
+MemNode::MemNode() {
+    char const* env_pti_mem_profile = std::getenv("PTI_MEM_PROFILE");
+    if(env_pti_mem_profile != nullptr && std::strcmp(env_pti_mem_profile, "1") == 0) {
+        enable_profiling = true;
+    }
+}
+
+MemNode::~MemNode() {
+    if(bytes_all_alloc != 0) {
+        std::fprintf(stderr, "Warning: %zu bytes leaked.\n", bytes_all_alloc);
+        for(auto const& i : bytes_per_alloc) {
+            std::fprintf(stderr, "    %p: %zu bytes\n", i.first, i.second);
+        }
+        std::fflush(stderr);
+    }
+}
 
 void CpuMemNode::memcpy_to(void* dest, MemNode& dest_node, void* src, size_t size) {
     if(dynamic_cast<CpuMemNode*>(&dest_node)) {

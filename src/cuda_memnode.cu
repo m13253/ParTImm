@@ -39,6 +39,8 @@ void* CudaMemNode::malloc(size_t size) {
     error = cudaMalloc(&ptr, size);
     ptiCheckCUDAError(error);
 
+    profile(ptr, size);
+
     error = cudaSetDevice(old_device);
     ptiCheckCUDAError(error);
 
@@ -61,6 +63,8 @@ void CudaMemNode::free(void* ptr) {
 
     error = cudaFree(ptr);
     ptiCheckCUDAError(error);
+
+    profile(ptr, 0);
 
     error = cudaSetDevice(old_device);
     ptiCheckCUDAError(error);

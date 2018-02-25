@@ -19,21 +19,57 @@
 #ifndef PTI_MEMNODE_INCLUDED
 #define PTI_MEMNODE_INCLUDED
 
-#include <cstdlib>
+#include <cstdio>
 #include <new>
+#include <string>
+#include <unordered_map>
+#include <ParTI/utils.hpp>
 
 namespace pti {
 
 struct MemNode {
 
-    virtual ~MemNode() {
-    }
+    MemNode();
+    virtual ~MemNode();
 
     virtual void* malloc(size_t size) = 0;
     virtual void* realloc(void* ptr, size_t size) = 0;
     virtual void free(void* ptr) = 0;
     virtual void memcpy_to(void* dest, MemNode& dest_node, void* src, size_t size) = 0;
     virtual void memcpy_from(void* dest, void* src, MemNode& src_node, size_t size) = 0;
+    size_t bytes_allocated() const { return bytes_all_alloc; }
+    size_t max_bytes_allocated() const { return max_bytes_all_alloc; }
+    std::string bytes_allocated_str() const { return size_to_string(bytes_all_alloc); }
+    std::string max_bytes_allocated_str() const { return size_to_string(max_bytes_all_alloc); }
+
+protected:
+
+    void profile(void const* ptr, size_t size) {
+        if(enable_profiling) {
+            std::unordered_map<void const*, size_t>::iterator it = bytes_per_alloc.find(ptr);
+            if(it == bytes_per_alloc.end()) {
+                if(size != 0) {
+                    bytes_per_alloc.emplace(ptr, size);
+                    bytes_all_alloc += size;
+                }
+            } else if(size != 0) {
+                bytes_all_alloc -= it->second;
+                it->second = size;
+                bytes_all_alloc += size;
+            } else {
+                bytes_all_alloc -= it->second;
+                bytes_per_alloc.erase(it);
+            }
+            if(bytes_all_alloc > max_bytes_all_alloc) {
+                max_bytes_all_alloc = bytes_all_alloc;
+            }
+        }
+    }
+
+    bool enable_profiling = false;
+    size_t bytes_all_alloc = 0;
+    size_t max_bytes_all_alloc = 0;
+    std::unordered_map<void const*, size_t> bytes_per_alloc;
 
 };
 
@@ -45,7 +81,12 @@ struct CpuMemNode : public MemNode {
         }
         void* ptr = std::malloc(size);
         if(!ptr) {
+            std::fprintf(stderr, "[CpuMemNode] Failed to allocate %zu bytes.\n", size);
             throw std::bad_alloc();
+        }
+        profile(ptr, size);
+        if(enable_profiling) {
+            std::fprintf(stderr, "[Mem Profile] malloc(%zu),\t%s used, %s max\n", size, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
         }
         return ptr;
     }
@@ -54,15 +95,22 @@ struct CpuMemNode : public MemNode {
         if(size == 0) {
             size = 1;
         }
-        ptr = std::realloc(ptr, size);
-        if(!ptr) {
+        void* newptr = std::realloc(ptr, size);
+        if(!newptr) {
+            std::fprintf(stderr, "[CpuMemNode] Failed to reallocate %zu bytes.\n", size);
             throw std::bad_alloc();
         }
-        return ptr;
+        profile(ptr, 0);
+        profile(newptr, size);
+        if(enable_profiling) {
+            std::fprintf(stderr, "[Mem Profile] realloc(..., %zu),\t%s used, %s max\n", size, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
+        }
+        return newptr;
     }
 
     void free(void* ptr) {
         std::free(ptr);
+        profile(ptr, 0);
     }
 
     void memcpy_to(void* dest, MemNode& dest_node, void* src, size_t size);
