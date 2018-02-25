@@ -49,7 +49,7 @@ protected:
             std::unordered_map<void const*, size_t>::iterator it = bytes_per_alloc.find(ptr);
             if(it == bytes_per_alloc.end()) {
                 if(size != 0) {
-                    bytes_per_alloc.emplace(ptr, size);
+                    bytes_per_alloc.insert(std::make_pair(ptr, size));
                     bytes_all_alloc += size;
                 }
             } else if(size != 0) {
