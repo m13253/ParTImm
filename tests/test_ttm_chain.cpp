@@ -74,7 +74,7 @@ int main(int argc, char const* argv[]) {
 
         Timer timer(cpu);
         timer.start();
-        SparseTensor Y = tensor_times_matrix(X, U, mode);
+        SparseTensor Y = tensor_times_matrix(X, U, mode, session.devices[cpu]);
         timer.stop();
 
         timer.print_elapsed_time("TTM");

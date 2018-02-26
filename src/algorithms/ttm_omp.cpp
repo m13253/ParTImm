@@ -115,12 +115,13 @@ SparseTensor tensor_times_matrix_omp(SparseTensor& X, Tensor& U, size_t mode, bo
     std::unique_ptr<size_t[]> idxU(new size_t[nmodes]);
     */
 
-    Timer timer_kernel(cpu);
-    timer_kernel.start();
-
     size_t Y_subchunk_size = X.chunk_size;
     size_t Y_num_subchunks = Y.strides(cpu)[mode];
     assert(Y_num_subchunks * Y_subchunk_size == Y.chunk_size);
+
+    Timer timer_kernel(cpu);
+    timer_kernel.start();
+
     // i is chunk-level on Y
     #pragma omp parallel for
     for(size_t i = 0; i < Y.num_chunks; ++i) {

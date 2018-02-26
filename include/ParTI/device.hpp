@@ -25,10 +25,11 @@ namespace pti {
 
 struct MemNode;
 
-/// A computing
+/// A computing device
 struct Device {
 
     std::string name;
+    int device_id;
     int mem_node;
 
     virtual ~Device() {

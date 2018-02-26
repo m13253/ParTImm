@@ -77,8 +77,9 @@ void Session::print_devices() const {
 }
 
 int Session::add_device(Device* device) {
+    device->device_id = (int) devices.size();
     devices.push_back(device);
-    return (int) devices.size() - 1;
+    return device->device_id;
 }
 
 int Session::add_mem_node(pti::MemNode *mem_node) {

@@ -62,7 +62,7 @@ int main(int argc, char const* argv[]) {
 
     for(size_t iter = 0; iter <= iterations; ++iter) {
         timer.start();
-        Y = tensor_times_matrix(X, U, mode);
+        Y = tensor_times_matrix(X, U, mode, session.devices[cpu]);
         timer.stop();
         if(iter != 0) {
             timer.print_elapsed_time("CPU TTM");

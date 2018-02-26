@@ -165,7 +165,7 @@ SparseTensor tucker_decomposition(
             for(size_t m = 0; m < N; ++m) {
                 if(m != n) {
                     std::fprintf(stderr, "[Tucker Dcomp] Iter %u, n = %zu, m = %zu\n", iter, n, m);
-                    Utilde_next = tensor_times_matrix(*Utilde, U[m], m, true);
+                    Utilde_next = tensor_times_matrix(*Utilde, U[m], m, device, true);
                     Utilde = &Utilde_next;
                 }
             }
@@ -176,7 +176,7 @@ SparseTensor tucker_decomposition(
             //std::fprintf(stderr, "U[%zu] = %s\n", n, U[n].to_string(false).c_str());
         }
 
-        core = tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1], true);
+        core = tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1], device, true);
         //std::fprintf(stderr, "core = %s\n", core.to_string(false).c_str());
 
         double normCore = core.norm();

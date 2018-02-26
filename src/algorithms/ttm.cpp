@@ -30,7 +30,16 @@
 
 namespace pti {
 
-SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode, bool skip_sort) {
+SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode, Device *device, bool skip_sort) {
+    if(CudaDevice *cuda_device = dynamic_cast<CudaDevice *>(device)) {
+#ifdef PARTI_USE_CUDA
+        return tensor_times_matrix_cuda(X, U, mode, cuda_device, skip_sort);
+#else
+        (void) cuda_device;
+        ptiCheckError(true, ERR_BUILD_CONFIG, "CUDA not enabled");
+#endif
+    }
+
     Timer timer(cpu);
     timer.start();
 
@@ -114,12 +123,13 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode, bool s
     std::unique_ptr<size_t[]> idxU(new size_t[nmodes]);
     */
 
-    Timer timer_kernel(cpu);
-    timer_kernel.start();
-
     size_t Y_subchunk_size = X.chunk_size;
     size_t Y_num_subchunks = Y.strides(cpu)[mode];
     assert(Y_num_subchunks * Y_subchunk_size == Y.chunk_size);
+
+    Timer timer_kernel(cpu);
+    timer_kernel.start();
+
     // i is chunk-level on Y
     for(size_t i = 0; i < Y.num_chunks; ++i) {
         size_t inz_begin = fiberidx[i];

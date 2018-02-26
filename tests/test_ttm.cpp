@@ -30,6 +30,7 @@ int main(int argc, char const* argv[]) {
     size_t mode = 0;
     bool dense_format = false;
     size_t limit = 10;
+    int device = 0;
     ParamDefinition defs[] = {
         { "-m",             PARAM_SIZET, { &mode } },
         { "--mode",         PARAM_SIZET, { &mode } },
@@ -37,6 +38,7 @@ int main(int argc, char const* argv[]) {
         { "--dense-format", PARAM_BOOL,  { &dense_format } },
         { "-l",             PARAM_SIZET, { &limit } },
         { "--limit",        PARAM_SIZET, { &limit } },
+        { "--dev",          PARAM_INT,    { &device } },
         { ptiEndParamDefinition }
     };
     std::vector<char const*> args = parse_args(argc, argv, defs);
@@ -47,6 +49,7 @@ int main(int argc, char const* argv[]) {
         std::printf("\t-m, --mode\tUse specific mode for multiplication [Default: 0]\n");
         std::printf("\t-d, --dense-format\tPrint tensor in dense format instead of sparse format.\n");
         std::printf("\t-l, --limit\t\tLimit the number of elements to print [Default: 10].\n");
+        std::printf("\t--dev\t\tComputing device\n");
         std::printf("\n");
         return 1;
     }
@@ -67,7 +70,7 @@ int main(int argc, char const* argv[]) {
 
     Timer timer(cpu);
     timer.start();
-    SparseTensor Y = tensor_times_matrix(X, U, mode);
+    SparseTensor Y = tensor_times_matrix(X, U, mode, session.devices[device]);
     timer.stop();
 
     std::printf("Y = %s\n", Y.to_string(!dense_format, limit).c_str());

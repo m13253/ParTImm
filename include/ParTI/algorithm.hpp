@@ -30,6 +30,7 @@ SparseTensor tensor_times_matrix(
     SparseTensor& X,
     Tensor& U,
     size_t mode,
+    Device* device,
     bool skip_sort = false
 );
 
@@ -37,6 +38,14 @@ SparseTensor tensor_times_matrix_omp(
     SparseTensor& X,
     Tensor& U,
     size_t mode,
+    bool skip_sort = false
+);
+
+SparseTensor tensor_times_matrix_cuda(
+    SparseTensor& X,
+    Tensor& U,
+    size_t mode,
+    CudaDevice* cuda_dev,
     bool skip_sort = false
 );
 
