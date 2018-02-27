@@ -156,10 +156,10 @@ SparseTensor tucker_decomposition(
         X_sort_cache[n] = X.clone();
         X_sort_cache[n].sort_index(sort_order.get());
         timer_sort_i.stop();
-        timer_sort_i.print_elapsed_time("\t\t\tTucker Sort");
+        timer_sort_i.print_elapsed_time("      Tucker Sort");
     }
     timer_sort.stop();
-    timer_sort.print_elapsed_time("\t\tTucker Sort Total");
+    timer_sort.print_elapsed_time("    Tucker Sort Total");
 
 
     double fit = 0;
@@ -184,7 +184,7 @@ SparseTensor tucker_decomposition(
             Utilde = &X_sort_cache[n];
             for(size_t m = 0; m < N; ++m) {
                 if(m != n) {
-                    std::fprintf(stderr, "\t\t[Tucker Decomp] Iter %u, n = %zu, m = %zu\n", iter, n, m);
+                    std::fprintf(stderr, "    [Tucker Decomp] Iter %u, n = %zu, m = %zu\n", iter, n, m);
                     Utilde_next = tensor_times_matrix(*Utilde, U[m], m, device, true);
                     Utilde = &Utilde_next;
                 }
@@ -192,7 +192,7 @@ SparseTensor tucker_decomposition(
             //std::fprintf(stderr, "Utilde = %s\n", Utilde->to_string(false).c_str());
             timer_ttm_chain.stop();
             tucker_time += timer_ttm_chain.elapsed_time();
-            timer_ttm_chain.print_elapsed_time("\t\tTTM Chain");
+            timer_ttm_chain.print_elapsed_time("    TTM Chain");
 
             Timer timer_svd(device->device_id);
             timer_svd.start();
@@ -200,18 +200,18 @@ SparseTensor tucker_decomposition(
             U[n] = nvecs(*Utilde, n, R[n], device);
             timer_svd.stop();
             tucker_time += timer_svd.elapsed_time();
-            timer_svd.print_elapsed_time("\t\tSVD");
+            timer_svd.print_elapsed_time("    SVD");
 
             Timer timer_matrix_trans(device->device_id);
             timer_matrix_trans.start();
             transpose_matrix_inplace(U[n], true, false, device);
             timer_matrix_trans.stop();
             tucker_time += timer_matrix_trans.elapsed_time();
-            timer_matrix_trans.print_elapsed_time("\t\tMatrix Transpose");
+            timer_matrix_trans.print_elapsed_time("    Matrix Transpose");
             //std::fprintf(stderr, "U[%zu] = %s\n", n, U[n].to_string(false).c_str());
         }   // End loop of nmodes
         timer_loop.stop();
-        timer_loop.print_elapsed_time("\tLoop time");
+        timer_loop.print_elapsed_time("  Loop time");
 
         Timer timer_core(cpu);
         timer_core.start();
@@ -219,7 +219,7 @@ SparseTensor tucker_decomposition(
         //std::fprintf(stderr, "core = %s\n", core.to_string(false).c_str());
         timer_core.stop();
         tucker_time += timer_core.elapsed_time();
-        timer_core.print_elapsed_time("\tComp Core");
+        timer_core.print_elapsed_time("  Comp Core");
 
         Timer timer_fit(cpu);
         timer_fit.start();
@@ -229,7 +229,7 @@ SparseTensor tucker_decomposition(
         double fitchange = std::fabs(fitold - fit);
         timer_fit.stop();
         tucker_time += timer_fit.elapsed_time();
-        timer_fit.print_elapsed_time("\tComp Fit");
+        timer_fit.print_elapsed_time("  Comp Fit");
 
         std::fprintf(stderr, "[Tucker Dcomp] normX = %lg, normCore = %lg\n", normX, normCore);
         std::fprintf(stderr, "[Tucker Dcomp] fit = %lg, fitchange = %lg\n", fit, fitchange);
@@ -239,7 +239,7 @@ SparseTensor tucker_decomposition(
         }
 
         timer_iter.stop();
-        timer_iter.print_elapsed_time("\tIter time");
+        timer_iter.print_elapsed_time("  Iter time");
     }   // End of iterations
 
     printf("Tucker time (no sorting) : %.3lf\n", tucker_time);
