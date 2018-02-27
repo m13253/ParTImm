@@ -138,8 +138,10 @@ SparseTensor tensor_times_matrix_cuda(SparseTensor& X, Tensor& U, size_t mode, C
     Timer timer_kernel(cuda_dev->device_id);
     timer_kernel.start();
     ttm_cuda_kernel<<<Y.num_chunks, dim3(Y_num_subchunks, Y_subchunk_size), 0>>>(dev_fiberidx, X_indices_m, nrows, ncols, Y.chunk_size, Y_subchunk_size, X.chunk_size, Ustride, Y_values, X_values, U_values);
+    int result = cudaThreadSynchronize();
     timer_kernel.stop();
     timer_kernel.print_elapsed_time("CUDA TTM Kernel");
+    ptiCheckCUDAError(result != 0);
 
     session.mem_nodes[cuda_dev->mem_node]->free(dev_fiberidx);
 
