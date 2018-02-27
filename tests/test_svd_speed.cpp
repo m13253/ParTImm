@@ -31,13 +31,15 @@
 using namespace pti;
 
 int main(int argc, char const* argv[]) {
-    size_t limit = 10;
+    int preheat = 5, count = 10;
     int device = 0;
     bool no_u = false, no_v = false;
     bool min_u = false, min_v = false;
     ParamDefinition defs[] = {
-        { "-l",             PARAM_SIZET,  { &limit } },
-        { "--limit",        PARAM_SIZET,  { &limit } },
+        { "-p",             PARAM_INT,    { &preheat } },
+        { "--preheat",      PARAM_INT,    { &preheat } },
+        { "-c",             PARAM_INT,    { &count } },
+        { "--count",        PARAM_INT,    { &count} },
         { "--dev",          PARAM_INT,    { &device } },
         { "--no-u",         PARAM_BOOL,   { &no_u } },
         { "--no-v",         PARAM_BOOL,   { &no_v } },
@@ -50,7 +52,8 @@ int main(int argc, char const* argv[]) {
     if(args.size() != 1) {
         std::printf("Usage: %s [OPTIONS] X\n\n", argv[0]);
         std::printf("Options:\n");
-        std::printf("\t-l, --limit\t\tLimit the number of elements to print [Default: 10].\n");
+        std::printf("\t-p, --preheat\tNumber of preheat calculations [Default: 5].\n");
+        std::printf("\t-c, --count\tNumber of calculations [Default: 10].\n");
         std::printf("\t--dev\t\tComputing device\n");
         std::printf("\t--no-u\t\tDo not calculate U\n");
         std::printf("\t--no-v\t\tDo not calculate V\n");
@@ -75,23 +78,42 @@ int main(int argc, char const* argv[]) {
     Tensor X = Tensor::load(fX);
     fX.fclose();
 
-    std::printf("X = %s\n\n", X.to_string(limit).c_str());
-
     Tensor U, S, V;
-    svd(
-        no_u ? nullptr : &U, false, min_u,
-        S,
-        no_v ? nullptr : &V, false, min_v,
-        X, dev
-    );
 
-    if(!no_u) {
-        std::printf("U = %s\n\n", U.to_string(limit).c_str());
+    std::printf("Preheating...\n");
+    std::fflush(stdout);
+
+    Timer timer_single(cpu);
+    for(int i = 0; i < preheat; ++i) {
+        timer_single.start();
+        svd(
+            no_u ? nullptr : &U, false, min_u,
+            S,
+            no_v ? nullptr : &V, false, min_v,
+            X, dev
+        );
+        timer_single.stop();
+        timer_single.print_elapsed_time("SVD");
     }
-    std::printf("S = %s\n\n", S.to_string(limit).c_str());
-    if(!no_v) {
-        std::printf("V = %s\n\n", V.to_string(limit).c_str());
+
+    std::printf("\nCalculating...\n");
+    std::fflush(stdout);
+
+    Timer timer(cpu);
+    timer.start();
+    for(int i = 0; i < count; ++i) {
+        timer_single.start();
+        svd(
+            no_u ? nullptr : &U, false, min_u,
+            S,
+            no_v ? nullptr : &V, false, min_v,
+            X, dev
+        );
+        timer_single.stop();
+        timer_single.print_elapsed_time("SVD");
     }
+    timer.stop();
+    std::printf("\nAverage time: %.9lf s\n", timer.elapsed_time() / count);
 
     return 0;
 }
