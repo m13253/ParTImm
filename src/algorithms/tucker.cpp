@@ -139,9 +139,32 @@ SparseTensor tucker_decomposition(
     SparseTensor core;
 
     std::unique_ptr<size_t []> sort_order(new size_t [N]);
+    std::unique_ptr<SparseTensor []> X_sort_cache(new SparseTensor [N]);
+    Timer timer_sort(cpu);
+    timer_sort.start();
+    for(size_t n = 0; n < N; ++n) {
+        Timer timer_sort_i(cpu);
+        timer_sort_i.start();
+        for(size_t m = 0; m < N; ++m) {
+            if(m < n) {
+                sort_order[N - m - 1] = m;
+            } else if(m != n) {
+                sort_order[N - m] = m;
+            }
+        }
+        sort_order[0] = n;
+        X_sort_cache[n] = X.clone();
+        X_sort_cache[n].sort_index(sort_order.get());
+        timer_sort_i.stop();
+        timer_sort_i.print_elapsed_time("\t\t\tTucker Sort");
+    }
+    timer_sort.stop();
+    timer_sort.print_elapsed_time("\t\tTucker Sort Total");
+
+
     double fit = 0;
     SparseTensor Utilde_next;
-    double sort_time = 0, tucker_time = 0;
+    double tucker_time = 0;
     for(unsigned iter = 0; iter < maxiters; ++iter) {
         printf("\n##### Iter %u #####\n", iter);
         Timer timer_iter(cpu);
@@ -156,24 +179,9 @@ SparseTensor tucker_decomposition(
             printf("\n");
             size_t n = dimorder[ni];
 
-            Timer timer_sort(cpu);
-            timer_sort.start();
-            for(size_t m = 0; m < N; ++m) {
-                if(m < n) {
-                    sort_order[N - m - 1] = m;
-                } else if(m != n) {
-                    sort_order[N - m] = m;
-                }
-            }
-            sort_order[0] = n;
-            X.sort_index(sort_order.get());
-            timer_sort.stop();
-            sort_time += timer_sort.elapsed_time();
-            timer_sort.print_elapsed_time("\t\tTucker Sort");
-
             Timer timer_ttm_chain(cpu);
             timer_ttm_chain.start();
-            Utilde = &X;
+            Utilde = &X_sort_cache[n];
             for(size_t m = 0; m < N; ++m) {
                 if(m != n) {
                     std::fprintf(stderr, "\t\t[Tucker Decomp] Iter %u, n = %zu, m = %zu\n", iter, n, m);
@@ -234,7 +242,6 @@ SparseTensor tucker_decomposition(
         timer_iter.print_elapsed_time("\tIter time");
     }   // End of iterations
 
-    printf("\nSort time : %.3lf\n", sort_time);
     printf("Tucker time (no sorting) : %.3lf\n", tucker_time);
 
     return core;

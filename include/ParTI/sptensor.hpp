@@ -59,6 +59,7 @@ public:
     explicit SparseTensor(Tensor&& other);
     SparseTensor& operator= (Tensor&& other);
 
+    SparseTensor clone();
     SparseTensor& reset(size_t nmodes, size_t const shape[], bool const is_dense[]);
 
     bool offset_to_indices(size_t indices[], size_t offset);

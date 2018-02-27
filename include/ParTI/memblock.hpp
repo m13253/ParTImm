@@ -124,6 +124,14 @@ public:
         last_node = node;
     }
 
+    /// Create a clone of this block
+    MemBlock clone(int node) {
+        MemBlock result;
+        result.allocate(node);
+        session.mem_nodes[last_node]->memcpy_to(result.pointers[node], *session.mem_nodes[node], pointers[last_node], sizeof (T));
+        return result;
+    }
+
 };
 
 template <typename T>
@@ -266,6 +274,14 @@ public:
     /// Set `last_node` to `node`.
     void mark_dirty(int node) {
         last_node = node;
+    }
+
+    /// Create a clone of this block
+    MemBlock clone(int node) {
+        MemBlock result;
+        result.allocate(node, sizes[last_node]);
+        session.mem_nodes[last_node]->memcpy_to(result.pointers[node], *session.mem_nodes[node], pointers[last_node], sizes[last_node] * sizeof (T));
+        return result;
     }
 
 };

@@ -75,6 +75,45 @@ SparseTensor& SparseTensor::operator= (SparseTensor&& other) {
     return *this;
 }
 
+SparseTensor SparseTensor::clone() {
+    SparseTensor result;
+
+    // nmodes
+    result.nmodes = nmodes;
+
+    // shape
+    result.shape = shape.clone(cpu);
+
+    // is_dense
+    result.is_dense = is_dense.clone(cpu);
+
+    // dense_order
+    result.dense_order = dense_order.clone(cpu);
+
+    // sparse_order
+    result.sparse_order = sparse_order.clone(cpu);
+
+    // strides
+    result.strides = strides.clone(cpu);
+
+    // chunk_size
+    result.chunk_size = chunk_size;
+
+    // num_chunks
+    result.num_chunks = num_chunks;
+
+    // indices
+    result.indices = new MemBlock<size_t[]> [nmodes];
+    for(size_t m = 0; m < nmodes; ++m) {
+        result.indices[m] = indices[m].clone(cpu);
+    }
+
+    // values
+    result.values = values.clone(cpu);
+
+    return result;
+}
+
 SparseTensor& SparseTensor::reset(size_t nmodes, size_t const shape[], bool const is_dense[]) {
 
     // nmodes
