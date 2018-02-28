@@ -81,7 +81,7 @@ int main(int argc, char const* argv[]) {
     std::printf("Preheating...\n");
     std::fflush(stdout);
 
-    Timer timer_single(cpu);
+    Timer timer_single(device);
     for(int i = 0; i < preheat; ++i) {
         Tensor U, S, V;
         timer_single.start();
@@ -98,7 +98,7 @@ int main(int argc, char const* argv[]) {
     std::printf("\nCalculating...\n");
     std::fflush(stdout);
 
-    Timer timer(cpu);
+    Timer timer(device);
     timer.start();
     for(int i = 0; i < count; ++i) {
         Tensor U, S, V;
