@@ -39,14 +39,16 @@ void __global__ ttm_cuda_kernel(
     size_t i = blockIdx.x;
     size_t inz_begin = fiberidx[i];
     size_t inz_end = fiberidx[i + 1];
-    for(size_t j = inz_begin; j < inz_end; ++j) {
-        size_t c = X_indices_m[j];
-        size_t r = threadIdx.x;
-        for(size_t k = threadIdx.y; k < Y_subchunk_size; k += blockDim.y) {
+    size_t r = threadIdx.x;
+    for(size_t k = threadIdx.y; k < Y_subchunk_size; k += blockDim.y) {
+        Scalar accumulate = 0;
+        for(size_t j = inz_begin; j < inz_end; ++j) {
+            size_t c = X_indices_m[j];
             if(r < nrows && c < ncols) {
-                Y_values[i * Y_chunk_size + r * Y_subchunk_size + k] += X_values[j * X_chunk_size + k] * U_values[r * U_stride + c];
+                accumulate += X_values[j * X_chunk_size + k] * U_values[r * U_stride + c];
             }
         }
+        Y_values[i * Y_chunk_size + r * Y_subchunk_size + k] += accumulate;
     }
 }
 
