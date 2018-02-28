@@ -78,13 +78,12 @@ int main(int argc, char const* argv[]) {
     Tensor X = Tensor::load(fX);
     fX.fclose();
 
-    Tensor U, S, V;
-
     std::printf("Preheating...\n");
     std::fflush(stdout);
 
     Timer timer_single(cpu);
     for(int i = 0; i < preheat; ++i) {
+        Tensor U, S, V;
         timer_single.start();
         svd(
             no_u ? nullptr : &U, false, min_u,
@@ -102,6 +101,7 @@ int main(int argc, char const* argv[]) {
     Timer timer(cpu);
     timer.start();
     for(int i = 0; i < count; ++i) {
+        Tensor U, S, V;
         timer_single.start();
         svd(
             no_u ? nullptr : &U, false, min_u,
