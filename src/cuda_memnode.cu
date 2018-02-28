@@ -41,7 +41,7 @@ void* CudaMemNode::malloc(size_t size) {
 
     if(enable_profiling) {
         profile(ptr, size);
-        std::fprintf(stderr, "[CudaMemNode] malloc(%zu),\t%s used, %s max\n", size, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
+        std::fprintf(stderr, "[CudaMemNode] malloc(%zu) = %p,\t%s used, %s max\n", size, ptr, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
     }
 
     error = cudaSetDevice(old_device);
@@ -69,7 +69,7 @@ void CudaMemNode::free(void* ptr) {
 
     if(enable_profiling) {
         size_t oldsize = profile(ptr, 0);
-        std::fprintf(stderr, "[CudaMemNode] free(%zu),\t%s used, %s max\n", oldsize, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
+        std::fprintf(stderr, "[CudaMemNode] free(%p[%zu]),\t%s used, %s max\n", ptr, oldsize, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
     }
 
     error = cudaSetDevice(old_device);
