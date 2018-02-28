@@ -42,9 +42,10 @@ void __global__ ttm_cuda_kernel(
     for(size_t j = inz_begin; j < inz_end; ++j) {
         size_t c = X_indices_m[j];
         size_t r = threadIdx.x;
-        size_t k = threadIdx.y;
-        if(r < nrows && c < ncols) {
-            Y_values[i * Y_chunk_size + r * Y_subchunk_size + k] += X_values[j * X_chunk_size + k] * U_values[r * U_stride + c];
+        for(size_t k = threadIdx.y; k < Y_subchunk_size; k += blockDim.y) {
+            if(r < nrows && c < ncols) {
+                Y_values[i * Y_chunk_size + r * Y_subchunk_size + k] += X_values[j * X_chunk_size + k] * U_values[r * U_stride + c];
+            }
         }
     }
 }
@@ -137,8 +138,9 @@ SparseTensor tensor_times_matrix_cuda(SparseTensor& X, Tensor& U, size_t mode, C
 
     Timer timer_kernel(cuda_dev->device_id);
     timer_kernel.start();
-    std::fprintf(stderr, "[CUDA TTM Kernel] Launch ttm_cuda_kernel<<<%zu, (%zu, %zu), 0>>()\n", Y.num_chunks, Y_num_subchunks, Y_subchunk_size);
-    ttm_cuda_kernel<<<Y.num_chunks, dim3(Y_num_subchunks, Y_subchunk_size), 0>>>(dev_fiberidx, X_indices_m, nrows, ncols, Y.chunk_size, Y_subchunk_size, X.chunk_size, Ustride, Y_values, X_values, U_values);
+    size_t kernel_blockDim_y = std::min(Y_subchunk_size, 1024 / Y_num_subchunks);
+    std::fprintf(stderr, "[CUDA TTM Kernel] Launch ttm_cuda_kernel<<<%zu, (%zu, %zu), 0>>()\n", Y.num_chunks, Y_num_subchunks, kernel_blockDim_y);
+    ttm_cuda_kernel<<<Y.num_chunks, dim3(Y_num_subchunks, kernel_blockDim_y), 0>>>(dev_fiberidx, X_indices_m, nrows, ncols, Y.chunk_size, Y_subchunk_size, X.chunk_size, Ustride, Y_values, X_values, U_values);
     int result = cudaThreadSynchronize();
     timer_kernel.stop();
     timer_kernel.print_elapsed_time("CUDA TTM Kernel");
