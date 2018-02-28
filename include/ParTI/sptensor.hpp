@@ -82,7 +82,7 @@ public:
     SparseTensor to_fully_sparse();
     SparseTensor to_fully_dense();
 
-    double norm();
+    double norm(Device *device);
 
 };
 

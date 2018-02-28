@@ -81,6 +81,7 @@ Tensor nvecs(
 
     Tensor u, s;
 
+    device = session.devices[cpu]; // Experiments show that cuSOLVER is slow when M >> N
     svd(&u, false, true, s, nullptr, false, false, tm, device);
     size_t const* u_shape = u.shape(cpu);
     size_t u_nrows = u_shape[0];
@@ -121,7 +122,7 @@ SparseTensor tucker_decomposition(
     ptiCheckError(X.dense_order.size() != 0, ERR_SHAPE_MISMATCH, "X should be fully sparse");
 
     size_t N = X.nmodes;
-    double normX = X.norm();
+    double normX = X.norm(device);
 
     std::unique_ptr<Tensor[]> U(new Tensor[N]);
     size_t U_shape[2];
@@ -223,7 +224,7 @@ SparseTensor tucker_decomposition(
 
         Timer timer_fit(cpu);
         timer_fit.start();
-        double normCore = core.norm();
+        double normCore = core.norm(device);
         double normResidual = std::sqrt(normX * normX - normCore * normCore);
         fit = 1 - normResidual / normX;
         double fitchange = std::fabs(fitold - fit);
