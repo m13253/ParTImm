@@ -26,6 +26,8 @@ namespace pti {
 namespace {
 
 double sqnorm_fully_sparse(SparseTensor &tensor, Device *device) {
+    (void) device;
+
     double sqnorm = 0;
     const Scalar *values = tensor.values(cpu);
 
