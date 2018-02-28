@@ -31,7 +31,7 @@
 using namespace pti;
 
 int main(int argc, char const* argv[]) {
-    int preheat = 5, count = 10;
+    int preheat = 2, count = 10;
     int device = 0;
     bool no_u = false, no_v = false;
     bool min_u = false, min_v = false;
@@ -52,7 +52,7 @@ int main(int argc, char const* argv[]) {
     if(args.size() != 1) {
         std::printf("Usage: %s [OPTIONS] X\n\n", argv[0]);
         std::printf("Options:\n");
-        std::printf("\t-p, --preheat\tNumber of preheat calculations [Default: 5].\n");
+        std::printf("\t-p, --preheat\tNumber of preheat calculations [Default: 2].\n");
         std::printf("\t-c, --count\tNumber of calculations [Default: 10].\n");
         std::printf("\t--dev\t\tComputing device\n");
         std::printf("\t--no-u\t\tDo not calculate U\n");
