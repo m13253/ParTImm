@@ -44,7 +44,8 @@ struct MemNode {
 
 protected:
 
-    void profile(void const* ptr, size_t size) {
+    size_t profile(void const* ptr, size_t size) {
+        size_t oldsize = 0;
         if(enable_profiling) {
             std::unordered_map<void const*, size_t>::iterator it = bytes_per_alloc.find(ptr);
             if(it == bytes_per_alloc.end()) {
@@ -52,18 +53,21 @@ protected:
                     bytes_per_alloc.insert(std::make_pair(ptr, size));
                     bytes_all_alloc += size;
                 }
-            } else if(size != 0) {
-                bytes_all_alloc -= it->second;
-                it->second = size;
-                bytes_all_alloc += size;
             } else {
-                bytes_all_alloc -= it->second;
-                bytes_per_alloc.erase(it);
+                oldsize = it->second;
+                bytes_all_alloc -= oldsize;
+                if(size != 0) {
+                    it->second = size;
+                    bytes_all_alloc += size;
+                } else {
+                    bytes_per_alloc.erase(it);
+                }
             }
             if(bytes_all_alloc > max_bytes_all_alloc) {
                 max_bytes_all_alloc = bytes_all_alloc;
             }
         }
+        return oldsize;
     }
 
     bool enable_profiling = false;
@@ -84,8 +88,8 @@ struct CpuMemNode : public MemNode {
             std::fprintf(stderr, "[CpuMemNode] Failed to allocate %zu bytes.\n", size);
             throw std::bad_alloc();
         }
-        profile(ptr, size);
         if(enable_profiling) {
+            profile(ptr, size);
             std::fprintf(stderr, "[CpuMemNode] malloc(%zu),\t%s used, %s max\n", size, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
         }
         return ptr;
@@ -100,17 +104,20 @@ struct CpuMemNode : public MemNode {
             std::fprintf(stderr, "[CpuMemNode] Failed to reallocate %zu bytes.\n", size);
             throw std::bad_alloc();
         }
-        profile(ptr, 0);
-        profile(newptr, size);
         if(enable_profiling) {
-            std::fprintf(stderr, "[CpuMemNode] realloc(..., %zu),\t%s used, %s max\n", size, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
+            size_t oldsize = profile(ptr, 0);
+            profile(newptr, size);
+            std::fprintf(stderr, "[CpuMemNode] realloc(%zu, %zu),\t%s used, %s max\n", oldsize, size, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
         }
         return newptr;
     }
 
     void free(void* ptr) {
         std::free(ptr);
-        profile(ptr, 0);
+        if(enable_profiling) {
+            size_t oldsize = profile(ptr, 0);
+            std::fprintf(stderr, "[CpuMemNode] free(%zu),\t%s used, %s max\n", oldsize, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
+        }
     }
 
     void memcpy_to(void* dest, MemNode& dest_node, void* src, size_t size);
