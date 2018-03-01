@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <ParTI/error.hpp>
+#include <ParTI/errcode.hpp>
 #include <ParTI/sptensor.hpp>
 #include <ParTI/utils.hpp>
 #include <ParTI/timer.hpp>
@@ -61,7 +62,10 @@ void set_semisparse_indices_by_sparse_ref(SparseTensor& dest, std::vector<size_t
     for(size_t i = 0; i < ref.num_chunks; ++i) {
         if(lastidx == ref.num_chunks || compare_indices(ref, lastidx, i, mode) != 0) {
             bool inbound = ref.offset_to_indices(indices.get(), i * ref.chunk_size);
-            assert(inbound);
+            if(!inbound) {
+                std::fprintf(stderr, "[TTM SetIdx] Internal error: indices [%s] is out of bound.\n", array_to_string(indices.get(), ref.nmodes).c_str());
+                ptiCheckError(false, ERR_UNKNOWN, "Internal error");
+            }
             dest.append(indices.get(), chunk.get());
             lastidx = i;
             fiber_idx.push_back(i);
