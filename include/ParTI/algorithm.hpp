@@ -68,6 +68,37 @@ void set_semisparse_indices_by_sparse_ref(
     size_t mode
 );
 
+
+void set_semisparse_indices_by_sparse_ref_scan_seq(
+    SparseTensor& dest,
+    std::vector<size_t>& fiber_idx,
+    SparseTensor& ref,
+    size_t mode
+);
+void set_semisparse_indices_by_sparse_ref_scan_omp(
+    SparseTensor& dest,
+    std::vector<size_t>& fiber_idx,
+    SparseTensor& ref,
+    size_t mode
+);
+void set_semisparse_indices_by_sparse_ref_scan_omp_task(
+    SparseTensor& dest,
+    std::vector<size_t>& fiber_idx,
+    SparseTensor& ref,
+    size_t mode
+);
+void set_semisparse_indices_by_sparse_ref_scan_cuda(
+    SparseTensor& dest,
+    std::vector<size_t>& fiber_idx,
+    SparseTensor& ref,
+    size_t mode
+);
+
+void scan_seq(size_t * array, size_t const length);
+void scan_omp(size_t * array, size_t const length);
+void scan_cuda(size_t * array, size_t const length);
+
+
 void svd(
     Tensor* U,
     bool U_want_transpose,
