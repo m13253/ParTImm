@@ -27,56 +27,73 @@
 using namespace pti;
 
 int main(int argc, char const* argv[]) {
+    int preheat = 2, count = 10;
+    int device = 0;
     size_t mode = 0;
-    size_t iterations = 5;
     ParamDefinition defs[] = {
-        { "-m",             PARAM_SIZET, { &mode } },
-        { "--mode",         PARAM_SIZET, { &mode } },
-        { "-i",             PARAM_SIZET, { &iterations } },
-        { "--iters",        PARAM_SIZET, { &iterations } },
+        { "-p",             PARAM_INT,    { &preheat } },
+        { "--preheat",      PARAM_INT,    { &preheat } },
+        { "-c",             PARAM_INT,    { &count } },
+        { "--count",        PARAM_INT,    { &count} },
+        { "--dev",          PARAM_INT,    { &device } },
+        { "--mode",         PARAM_SIZET,  { &mode } },
         { ptiEndParamDefinition }
     };
     std::vector<char const*> args = parse_args(argc, argv, defs);
 
     if(args.size() != 2) {
-        std::printf("Usage: %s [OPTIONS] X U\n\n", argv[0]);
+        std::printf("Usage: %s [OPTIONS] X U mode\n\n", argv[0]);
         std::printf("Options:\n");
+        std::printf("\t-p, --preheat\tNumber of preheat calculations [Default: 2].\n");
+        std::printf("\t-c, --count\tNumber of calculations [Default: 10].\n");
         std::printf("\t-m, --mode\tUse specific mode for multiplication [Default: 0]\n");
-        std::printf("\t-i, --iters\tUse specific iterations to measure time [Default: 5]\n");
+        std::printf("\t--dev\t\tComputing device\n");
         std::printf("\n");
         return 1;
     }
 
-    session.print_devices();
+    Device* dev = session.devices[device];
+    if(dynamic_cast<CudaDevice*>(dev) != nullptr) {
+        std::printf("Using CUDA for calculation.\n");
+    } else if(dynamic_cast<CpuDevice*>(dev) != nullptr) {
+        std::printf("Using CPU for calculation.\n");
+    } else {
+        std::printf("Unknown device type.\n");
+        return 1;
+    }
 
     CFile fX(args[0], "r");
-    SparseTensor X = SparseTensor::load(fX, 1);
+    SparseTensor X = SparseTensor::load(fX);
     fX.fclose();
 
     CFile fU(args[1], "r");
     Tensor U = Tensor::load(fU);
-    fU.fclose();
+    fX.fclose();
 
-    Timer timer(cpu);
-    SparseTensor Y;
+    std::printf("Preheating...\n");
+    std::fflush(stdout);
 
-    for(size_t iter = 0; iter <= iterations; ++iter) {
-        timer.start();
-        Y = tensor_times_matrix(X, U, mode, session.devices[cpu]);
-        timer.stop();
-        if(iter != 0) {
-            timer.print_elapsed_time("CPU TTM");
-        }
+    Timer timer_single(device);
+    for(int i = 0; i < std::max(preheat, 1); ++i) {
+        timer_single.start();
+        SparseTensor Y = tensor_times_matrix(X, U, mode, session.devices[device], i != 0);
+        timer_single.stop();
+        timer_single.print_elapsed_time("TTM");
     }
 
-    for(size_t iter = 0; iter <= iterations; ++iter) {
-        timer.start();
-        Y = tensor_times_matrix_omp(X, U, mode);
-        timer.stop();
-        if(iter != 0) {
-            timer.print_elapsed_time("OMP TTM");
-        }
+    std::printf("\nCalculating...\n");
+    std::fflush(stdout);
+
+    Timer timer(device);
+    timer.start();
+    for(int i = 0; i < count; ++i) {
+        timer_single.start();
+        SparseTensor Y = tensor_times_matrix(X, U, mode, session.devices[device], true);
+        timer_single.stop();
+        timer_single.print_elapsed_time("TTM");
     }
+    timer.stop();
+    std::printf("\nAverage time: %.9lf s\n", timer.elapsed_time() / count);
 
     return 0;
 }
