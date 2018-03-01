@@ -63,7 +63,7 @@ int main(int argc, char const* argv[]) {
     }
 
     CFile fX(args[0], "r");
-    SparseTensor X = SparseTensor::load(fX);
+    SparseTensor X = SparseTensor::load(fX, 1);
     fX.fclose();
 
     CFile fU(args[1], "r");
