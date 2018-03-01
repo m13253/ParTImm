@@ -107,10 +107,10 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode, Device
     timer_setidx.start();
 
     std::vector<size_t> fiberidx;
-    // set_semisparse_indices_by_sparse_ref(Y, fiberidx, X, mode);
+    set_semisparse_indices_by_sparse_ref(Y, fiberidx, X, mode);
     // set_semisparse_indices_by_sparse_ref_scan_seq(Y, fiberidx, X, mode);
     // set_semisparse_indices_by_sparse_ref_scan_omp_task(Y, fiberidx, X, mode);
-    set_semisparse_indices_by_sparse_ref_scan_omp(Y, fiberidx, X, mode);
+    // set_semisparse_indices_by_sparse_ref_scan_omp(Y, fiberidx, X, mode);
     // printf("fiberidx: \n");
     // for(size_t i = 0; i < fiberidx.size(); ++i) {
     //     printf("%zu ", fiberidx[i]);
