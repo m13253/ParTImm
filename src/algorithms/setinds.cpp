@@ -64,7 +64,7 @@ void set_semisparse_indices_by_sparse_ref(SparseTensor& dest, std::vector<size_t
             bool inbound = ref.offset_to_indices(indices.get(), i * ref.chunk_size);
             if(!inbound) {
                 std::fprintf(stderr, "[TTM SetIdx] Internal error: indices [%s] is out of bound.\n", array_to_string(indices.get(), ref.nmodes).c_str());
-                ptiCheckError(false, ERR_UNKNOWN, "Internal error");
+                ptiCheckError(!inbound, ERR_UNKNOWN, "Internal error");
             }
             dest.append(indices.get(), chunk.get());
             lastidx = i;
