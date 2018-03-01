@@ -68,7 +68,7 @@ int main(int argc, char const* argv[]) {
 
     CFile fU(args[1], "r");
     Tensor U = Tensor::load(fU);
-    fX.fclose();
+    fU.fclose();
 
     std::printf("Preheating...\n");
     std::fflush(stdout);
