@@ -83,7 +83,7 @@ int main(int argc, char const* argv[]) {
     Timer timer_single(device);
     for(int i = 0; i < std::max(preheat, 1); ++i) {
         timer_single.start();
-        SparseTensor Y = tensor_times_matrix(X, U2, 1, session.devices[device], i != 0);
+        SparseTensor Y = tensor_times_matrix(Y1, U2, 1, session.devices[device], i != 0);
         timer_single.stop();
         timer_single.print_elapsed_time("TTM");
     }
@@ -95,7 +95,7 @@ int main(int argc, char const* argv[]) {
     timer.start();
     for(int i = 0; i < count; ++i) {
         timer_single.start();
-        SparseTensor Y = tensor_times_matrix(X, U2, 1, session.devices[device], true);
+        SparseTensor Y = tensor_times_matrix(Y1, U2, 1, session.devices[device], true);
         timer_single.stop();
         timer_single.print_elapsed_time("TTM");
     }
