@@ -89,7 +89,7 @@ int main(int argc, char const* argv[]) {
     timer_tucker.start();
     SparseTensor Y = tucker_decomposition(X, R.get(), dimorder.get(), dev);
     timer_tucker.stop();
-    timer_tucker.print_elapsed_time("Whole Tucker Decomp");
+    timer_tucker.print_elapsed_time("Tucker Decomp");
 
     std::printf("Y = %s\n", Y.to_string(!dense_format, limit).c_str());
 
