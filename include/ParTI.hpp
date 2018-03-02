@@ -19,4 +19,21 @@
 #ifndef PARTI_INCLUDED
 #define PARTI_INCLUDED
 
+#include <ParTI/algorithm.hpp>
+#include <ParTI/argparse.hpp>
+#include <ParTI/base_tensor.hpp>
+#include <ParTI/cfile.hpp>
+#include <ParTI/device.hpp>
+#include <ParTI/errcode.hpp>
+#include <ParTI/error.hpp>
+#include <ParTI/future.hpp>
+#include <ParTI/memblock.hpp>
+#include <ParTI/memnode.hpp>
+#include <ParTI/scalar.hpp>
+#include <ParTI/session.hpp>
+#include <ParTI/sptensor.hpp>
+#include <ParTI/tensor.hpp>
+#include <ParTI/timer.hpp>
+#include <ParTI/utils.hpp>
+
 #endif

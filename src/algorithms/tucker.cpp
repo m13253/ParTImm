@@ -118,7 +118,7 @@ SparseTensor tucker_decomposition(
     double          tol,
     unsigned        maxiters
 ) {
-    maxiters = 1; //jli added for debug
+    maxiters = 2; // jli added for debug
     ptiCheckError(X.dense_order.size() != 0, ERR_SHAPE_MISMATCH, "X should be fully sparse");
 
     size_t N = X.nmodes;
@@ -157,17 +157,15 @@ SparseTensor tucker_decomposition(
         X_sort_cache[n] = X.clone();
         X_sort_cache[n].sort_index(sort_order.get());
         timer_sort_i.stop();
-        timer_sort_i.print_elapsed_time("      Tucker Sort");
+        timer_sort_i.print_elapsed_time("Tucker Sort");
     }
     timer_sort.stop();
-    timer_sort.print_elapsed_time("    Tucker Sort Total");
+    timer_sort.print_elapsed_time("Tucker Sort Total");
 
 
     double fit = 0;
     SparseTensor Utilde_next;
-    double tucker_time = 0;
     for(unsigned iter = 0; iter < maxiters; ++iter) {
-        printf("\n##### Iter %u #####\n", iter);
         Timer timer_iter(cpu);
         timer_iter.start();
 
@@ -185,42 +183,31 @@ SparseTensor tucker_decomposition(
             Utilde = &X_sort_cache[n];
             for(size_t m = 0; m < N; ++m) {
                 if(m != n) {
-                    std::fprintf(stderr, "    [Tucker Decomp] Iter %u, n = %zu, m = %zu\n", iter, n, m);
+                    std::fprintf(stderr, "[Tucker Decomp] Iter %u, n = %zu, m = %zu\n", iter, n, m);
                     Utilde_next = tensor_times_matrix(*Utilde, U[m], m, device, true);
                     Utilde = &Utilde_next;
                 }
             }
-            //std::fprintf(stderr, "Utilde = %s\n", Utilde->to_string(false).c_str());
             timer_ttm_chain.stop();
-            tucker_time += timer_ttm_chain.elapsed_time();
-            timer_ttm_chain.print_elapsed_time("    TTM Chain");
+            timer_ttm_chain.print_elapsed_time("TTM Chain");
 
             Timer timer_svd(device->device_id);
             timer_svd.start();
             // Mode n is sparse, while other modes are dense
             U[n] = nvecs(*Utilde, n, R[n], device);
             timer_svd.stop();
-            tucker_time += timer_svd.elapsed_time();
-            timer_svd.print_elapsed_time("    SVD");
+            timer_svd.print_elapsed_time("SVD");
 
-            Timer timer_matrix_trans(device->device_id);
-            timer_matrix_trans.start();
             transpose_matrix_inplace(U[n], true, false, device);
-            timer_matrix_trans.stop();
-            tucker_time += timer_matrix_trans.elapsed_time();
-            timer_matrix_trans.print_elapsed_time("    Matrix Transpose");
-            //std::fprintf(stderr, "U[%zu] = %s\n", n, U[n].to_string(false).c_str());
         }   // End loop of nmodes
         timer_loop.stop();
-        timer_loop.print_elapsed_time("  Loop time");
+        timer_loop.print_elapsed_time("Tucker Decomp Loop");
 
         Timer timer_core(cpu);
         timer_core.start();
         core = tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1], device, true);
-        //std::fprintf(stderr, "core = %s\n", core.to_string(false).c_str());
         timer_core.stop();
-        tucker_time += timer_core.elapsed_time();
-        timer_core.print_elapsed_time("  Comp Core");
+        timer_core.print_elapsed_time("Tucker Decomp Core");
 
         Timer timer_fit(cpu);
         timer_fit.start();
@@ -229,8 +216,7 @@ SparseTensor tucker_decomposition(
         fit = 1 - normResidual / normX;
         double fitchange = std::fabs(fitold - fit);
         timer_fit.stop();
-        tucker_time += timer_fit.elapsed_time();
-        timer_fit.print_elapsed_time("  Comp Fit");
+        timer_fit.print_elapsed_time("Tucker Decomp Norm");
 
         std::fprintf(stderr, "[Tucker Dcomp] normX = %lg, normCore = %lg\n", normX, normCore);
         std::fprintf(stderr, "[Tucker Dcomp] fit = %lg, fitchange = %lg\n", fit, fitchange);
@@ -240,10 +226,8 @@ SparseTensor tucker_decomposition(
         }
 
         timer_iter.stop();
-        timer_iter.print_elapsed_time("  Iter time");
+        timer_iter.print_elapsed_time("Tucker Decomp Iter");
     }   // End of iterations
-
-    printf("Tucker time (no sorting) : %.3lf\n", tucker_time);
 
     return core;
 }

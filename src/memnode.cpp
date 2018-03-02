@@ -26,9 +26,9 @@
 namespace pti {
 
 MemNode::MemNode() {
-    char const* env_pti_mem_profile = std::getenv("PTI_MEM_PROFILE");
-    if(env_pti_mem_profile != nullptr && std::strcmp(env_pti_mem_profile, "1") == 0) {
-        enable_profiling = true;
+    char const* env_pti_malloc_profile = std::getenv("PTI_MALLOC_PROFILE");
+    if(env_pti_malloc_profile != nullptr && std::strcmp(env_pti_malloc_profile, "1") == 0) {
+        malloc_profiling = true;
     }
 }
 

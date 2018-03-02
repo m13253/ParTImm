@@ -40,9 +40,6 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode, Device
 #endif
     }
 
-    Timer timer(cpu);
-    timer.start();
-
     size_t nmodes = X.nmodes;
     size_t nspmodes = X.sparse_order.size();
 
@@ -77,7 +74,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode, Device
         X.sort_index(sort_order.get());
 
         timer_sort.stop();
-        timer_sort.print_elapsed_time("      CPU TTM Sort");
+        timer_sort.print_elapsed_time("CPU TTM Sort");
     }
 
     std::unique_ptr<size_t[]> Y_shape(new size_t [nmodes]);
@@ -118,7 +115,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode, Device
     // printf("\n"); fflush(stdout);
 
     timer_setidx.stop();
-    timer_setidx.print_elapsed_time("      CPU TTM SetIdx");
+    timer_setidx.print_elapsed_time("CPU TTM SetIdx");
 
     Scalar* X_values = X.values(cpu);
     Scalar* Y_values = Y.values(cpu);
@@ -166,10 +163,7 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode, Device
     }
 
     timer_kernel.stop();
-    timer_kernel.print_elapsed_time("      CPU TTM Kernel");
-
-    timer.stop();
-    timer.print_elapsed_time("      CPU Single TTM");
+    timer_kernel.print_elapsed_time("CPU TTM Kernel");
 
     return Y;
 }

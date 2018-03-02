@@ -32,9 +32,6 @@
 namespace pti {
 
 SparseTensor tensor_times_matrix_omp(SparseTensor& X, Tensor& U, size_t mode, bool skip_sort) {
-    Timer timer(cpu);
-    timer.start();
-
     size_t nmodes = X.nmodes;
     size_t nspmodes = X.sparse_order.size();
 
@@ -152,9 +149,6 @@ SparseTensor tensor_times_matrix_omp(SparseTensor& X, Tensor& U, size_t mode, bo
 
     timer_kernel.stop();
     timer_kernel.print_elapsed_time("OMP TTM Kernel");
-
-    timer.stop();
-    timer.print_elapsed_time("OMP TTM");
 
     return Y;
 }

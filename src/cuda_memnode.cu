@@ -17,12 +17,18 @@
 */
 
 #include <ParTI/memnode.hpp>
+#include <cstdlib>
 #include <ParTI/error.hpp>
+#include <ParTI/timer.hpp>
 
 namespace pti {
 
 CudaMemNode::CudaMemNode(int cuda_device) {
     this->cuda_device = cuda_device;
+    char const* env_pti_memcpy_profile = std::getenv("PTI_MEMCPY_PROFILE");
+    if(env_pti_memcpy_profile != nullptr && std::strcmp(env_pti_memcpy_profile, "1") == 0) {
+        memcpy_profiling = true;
+    }
 }
 
 void* CudaMemNode::malloc(size_t size) {
@@ -39,7 +45,7 @@ void* CudaMemNode::malloc(size_t size) {
     error = cudaMalloc(&ptr, size);
     ptiCheckCUDAError(error);
 
-    if(enable_profiling) {
+    if(malloc_profiling) {
         profile(ptr, size);
         std::fprintf(stderr, "[CudaMemNode] malloc(%zu) = %p,\t%s used, %s max\n", size, ptr, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
     }
@@ -67,7 +73,7 @@ void CudaMemNode::free(void* ptr) {
     error = cudaFree(ptr);
     ptiCheckCUDAError(error);
 
-    if(enable_profiling) {
+    if(malloc_profiling) {
         size_t oldsize = profile(ptr, 0);
         std::fprintf(stderr, "[CudaMemNode] free(%p[%zu]),\t%s used, %s max\n", ptr, oldsize, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
     }
@@ -77,30 +83,70 @@ void CudaMemNode::free(void* ptr) {
 }
 
 void CudaMemNode::memcpy_to(void* dest, MemNode& dest_node, void* src, size_t size) {
+    char buf_timer[sizeof (Timer)];
+    Timer *timer = nullptr;
     cudaError_t error;
     if(CpuMemNode* cpu_dest_node = dynamic_cast<CpuMemNode*>(&dest_node)) {
+        if(memcpy_profiling) {
+            timer = new(buf_timer) Timer(cuda_device);
+            timer->start();
+        }
         error = cudaSetDevice(cuda_device);
         ptiCheckCUDAError(error);
         error = cudaMemcpy(dest, src, size, cudaMemcpyDeviceToHost);
         ptiCheckCUDAError(error);
+        if(memcpy_profiling) {
+            timer->stop();
+            timer->print_elapsed_time("CudaMemNode DtoH");
+            timer->~Timer();
+        }
     } else if(CudaMemNode* cuda_dest_node = dynamic_cast<CudaMemNode*>(&dest_node)) {
+        if(memcpy_profiling) {
+            timer = new(buf_timer) Timer(cuda_device);
+            timer->start();
+        }
         error = cudaMemcpyPeer(dest, cuda_dest_node->cuda_device, src, cuda_device, size);
         ptiCheckCUDAError(error);
+        if(memcpy_profiling) {
+            timer->stop();
+            timer->print_elapsed_time("CudaMemNode DtoD");
+            timer->~Timer();
+        }
     } else {
         ptiCheckError(true, 1, "Unknown memory node type");
     }
 }
 
 void CudaMemNode::memcpy_from(void* dest, void* src, MemNode& src_node, size_t size) {
+    char buf_timer[sizeof (Timer)];
+    Timer *timer = nullptr;
     cudaError_t error;
     if(CpuMemNode* cpu_src_node = dynamic_cast<CpuMemNode*>(&src_node)) {
+        if(memcpy_profiling) {
+            timer = new(buf_timer) Timer(cuda_device);
+            timer->start();
+        }
         error = cudaSetDevice(cuda_device);
         ptiCheckCUDAError(error);
         error = cudaMemcpy(dest, src, size, cudaMemcpyHostToDevice);
         ptiCheckCUDAError(error);
+        if(memcpy_profiling) {
+            timer->stop();
+            timer->print_elapsed_time("CudaMemNode HtoD");
+            timer->~Timer();
+        }
     } else if(CudaMemNode* cuda_src_node = dynamic_cast<CudaMemNode*>(&src_node)) {
+        if(memcpy_profiling) {
+            timer = new(buf_timer) Timer(cuda_device);
+            timer->start();
+        }
         error = cudaMemcpyPeer(dest, cuda_device, src, cuda_src_node->cuda_device, size);
         ptiCheckCUDAError(error);
+        if(memcpy_profiling) {
+            timer->stop();
+            timer->print_elapsed_time("CudaMemNode DtoD");
+            timer->~Timer();
+        }
     } else {
         ptiCheckError(true, 1, "Unknown memory node type");
     }

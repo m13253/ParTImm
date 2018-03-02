@@ -55,9 +55,6 @@ void __global__ ttm_cuda_kernel(
 }
 
 SparseTensor tensor_times_matrix_cuda(SparseTensor& X, Tensor& U, size_t mode, CudaDevice* cuda_dev, bool skip_sort) {
-    Timer timer(cpu);
-    timer.start();
-
     size_t nmodes = X.nmodes;
     size_t nspmodes = X.sparse_order.size();
 
@@ -150,9 +147,6 @@ SparseTensor tensor_times_matrix_cuda(SparseTensor& X, Tensor& U, size_t mode, C
     ptiCheckCUDAError(result != 0);
 
     session.mem_nodes[cuda_dev->mem_node]->free(dev_fiberidx);
-
-    timer.stop();
-    timer.print_elapsed_time("CUDA TTM");
 
     return Y;
 }

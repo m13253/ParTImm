@@ -46,7 +46,7 @@ protected:
 
     size_t profile(void const* ptr, size_t size) {
         size_t oldsize = 0;
-        if(enable_profiling) {
+        if(malloc_profiling) {
             std::unordered_map<void const*, size_t>::iterator it = bytes_per_alloc.find(ptr);
             if(it == bytes_per_alloc.end()) {
                 if(size != 0) {
@@ -70,7 +70,7 @@ protected:
         return oldsize;
     }
 
-    bool enable_profiling = false;
+    bool malloc_profiling = false;
     size_t bytes_all_alloc = 0;
     size_t max_bytes_all_alloc = 0;
     std::unordered_map<void const*, size_t> bytes_per_alloc;
@@ -88,7 +88,7 @@ struct CpuMemNode : public MemNode {
             std::fprintf(stderr, "[CpuMemNode] Failed to allocate %zu bytes.\n", size);
             throw std::bad_alloc();
         }
-        if(enable_profiling) {
+        if(malloc_profiling) {
             profile(ptr, size);
             std::fprintf(stderr, "[CpuMemNode] malloc(%zu) = %p,\t%s used, %s max\n", size, ptr, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
         }
@@ -104,7 +104,7 @@ struct CpuMemNode : public MemNode {
             std::fprintf(stderr, "[CpuMemNode] Failed to reallocate %zu bytes.\n", size);
             throw std::bad_alloc();
         }
-        if(enable_profiling) {
+        if(malloc_profiling) {
             size_t oldsize = profile(ptr, 0);
             profile(newptr, size);
             std::fprintf(stderr, "[CpuMemNode] realloc(%p[%zu], %zu) = %p,\t%s used, %s max\n", ptr, oldsize, size, newptr, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
@@ -114,7 +114,7 @@ struct CpuMemNode : public MemNode {
 
     void free(void* ptr) {
         std::free(ptr);
-        if(enable_profiling) {
+        if(malloc_profiling) {
             size_t oldsize = profile(ptr, 0);
             std::fprintf(stderr, "[CpuMemNode] free(%p[%zu]),\t%s used, %s max\n", ptr, oldsize, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
         }
@@ -135,6 +135,10 @@ struct CudaMemNode : public MemNode {
     void memcpy_from(void* dest, void* src, MemNode& src_node, size_t size);
 
     int cuda_device;
+
+private:
+
+    bool memcpy_profiling = false;
 
 };
 
