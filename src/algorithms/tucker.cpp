@@ -76,9 +76,6 @@ Tensor nvecs(
 ) {
 
     Tensor tm = unfold(t, n);
-
-    //std::fprintf(stderr, "unfold(t, %zu) = %s\n", n, tm.to_string(false).c_str());
-
     Tensor u, s;
 
     device = session.devices[cpu]; // Experiments show that cuSOLVER is slow when M >> N
@@ -87,8 +84,6 @@ Tensor nvecs(
     size_t u_nrows = u_shape[0];
     size_t u_ncols = u_shape[1];
     assert(u_nrows == t.shape(cpu)[n]);
-
-    //std::fprintf(stderr, "svd(unfold(t)).U = %s\n", u.to_string(false).c_str());
 
     size_t const result_shape[2] = { u_nrows, r };
     Tensor result(2, result_shape);
@@ -175,7 +170,7 @@ SparseTensor tucker_decomposition(
         timer_loop.start();
         SparseTensor* Utilde = &X;
         for(size_t ni = 0; ni < N; ++ni) {
-            printf("\n");
+            std::printf("\n");
             size_t n = dimorder[ni];
 
             Timer timer_ttm_chain(cpu);
@@ -183,7 +178,8 @@ SparseTensor tucker_decomposition(
             Utilde = &X_sort_cache[n];
             for(size_t m = 0; m < N; ++m) {
                 if(m != n) {
-                    std::fprintf(stderr, "[Tucker Decomp] Iter %u, n = %zu, m = %zu\n", iter, n, m);
+                    std::printf("[Tucker Decomp] Iter %u, n = %zu, m = %zu\n", iter, n, m);
+                    std::fflush(stdout);
                     Utilde_next = tensor_times_matrix(*Utilde, U[m], m, device, true);
                     Utilde = &Utilde_next;
                 }
@@ -218,8 +214,9 @@ SparseTensor tucker_decomposition(
         timer_fit.stop();
         timer_fit.print_elapsed_time("Tucker Decomp Norm");
 
-        std::fprintf(stderr, "[Tucker Dcomp] normX = %lg, normCore = %lg\n", normX, normCore);
-        std::fprintf(stderr, "[Tucker Dcomp] fit = %lg, fitchange = %lg\n", fit, fitchange);
+        std::printf("[Tucker Dcomp] normX = %lg, normCore = %lg\n", normX, normCore);
+        std::printf("[Tucker Dcomp] fit = %lg, fitchange = %lg\n", fit, fitchange);
+        std::fflush(stdout);
 
         if(iter != 0 && fitchange < tol) {
             break;
