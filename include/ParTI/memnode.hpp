@@ -85,12 +85,12 @@ struct CpuMemNode : public MemNode {
         }
         void* ptr = std::malloc(size);
         if(!ptr) {
-            std::fprintf(stderr, "[CpuMemNode] Failed to allocate %zu bytes.\n", size);
+            std::fprintf(stderr, "[CpuMemNode]: Failed to allocate %zu bytes.\n", size);
             throw std::bad_alloc();
         }
         if(malloc_profiling) {
             profile(ptr, size);
-            std::fprintf(stderr, "[CpuMemNode] malloc(%zu) = %p,\t%s used, %s max\n", size, ptr, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
+            std::fprintf(stderr, "[CpuMemNode]: malloc(%zu) = %p,\t%s used, %s max\n", size, ptr, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
         }
         return ptr;
     }
@@ -101,13 +101,13 @@ struct CpuMemNode : public MemNode {
         }
         void* newptr = std::realloc(ptr, size);
         if(!newptr) {
-            std::fprintf(stderr, "[CpuMemNode] Failed to reallocate %zu bytes.\n", size);
+            std::fprintf(stderr, "[CpuMemNode]: Failed to reallocate %zu bytes.\n", size);
             throw std::bad_alloc();
         }
         if(malloc_profiling) {
             size_t oldsize = profile(ptr, 0);
             profile(newptr, size);
-            std::fprintf(stderr, "[CpuMemNode] realloc(%p[%zu], %zu) = %p,\t%s used, %s max\n", ptr, oldsize, size, newptr, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
+            std::fprintf(stderr, "[CpuMemNode]: realloc(%p[%zu], %zu) = %p,\t%s used, %s max\n", ptr, oldsize, size, newptr, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
         }
         return newptr;
     }
@@ -116,7 +116,7 @@ struct CpuMemNode : public MemNode {
         std::free(ptr);
         if(malloc_profiling) {
             size_t oldsize = profile(ptr, 0);
-            std::fprintf(stderr, "[CpuMemNode] free(%p[%zu]),\t%s used, %s max\n", ptr, oldsize, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
+            std::fprintf(stderr, "[CpuMemNode]: free(%p[%zu]),\t%s used, %s max\n", ptr, oldsize, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
         }
     }
 

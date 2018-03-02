@@ -178,7 +178,7 @@ SparseTensor tucker_decomposition(
             Utilde = &X_sort_cache[n];
             for(size_t m = 0; m < N; ++m) {
                 if(m != n) {
-                    std::printf("[Tucker Decomp] Iter %u, n = %zu, m = %zu\n", iter, n, m);
+                    std::printf("[Tucker Decomp]: Iter %u, n = %zu, m = %zu\n", iter, n, m);
                     std::fflush(stdout);
                     Utilde_next = tensor_times_matrix(*Utilde, U[m], m, device, true);
                     Utilde = &Utilde_next;
@@ -217,8 +217,8 @@ SparseTensor tucker_decomposition(
         timer_fit.stop();
         timer_fit.print_elapsed_time("Tucker Decomp Norm");
 
-        std::printf("[Tucker Dcomp] normX = %lg, normCore = %lg\n", normX, normCore);
-        std::printf("[Tucker Dcomp] fit = %lg, fitchange = %lg\n", fit, fitchange);
+        std::printf("[Tucker Dcomp]: normX = %lg, normCore = %lg\n", normX, normCore);
+        std::printf("[Tucker Dcomp]: fit = %lg, fitchange = %lg\n", fit, fitchange);
         std::fflush(stdout);
 
         if(iter != 0 && fitchange < tol) {

@@ -46,7 +46,7 @@ void* CudaMemNode::malloc(size_t size) {
 
     if(malloc_profiling) {
         profile(ptr, size);
-        std::fprintf(stderr, "[CudaMemNode] malloc(%zu) = %p,\t%s used, %s max\n", size, ptr, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
+        std::fprintf(stderr, "[CudaMemNode]: malloc(%zu) = %p,\t%s used, %s max\n", size, ptr, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
     }
 
     error = cudaSetDevice(old_device);
@@ -74,7 +74,7 @@ void CudaMemNode::free(void* ptr) {
 
     if(malloc_profiling) {
         size_t oldsize = profile(ptr, 0);
-        std::fprintf(stderr, "[CudaMemNode] free(%p[%zu]),\t%s used, %s max\n", ptr, oldsize, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
+        std::fprintf(stderr, "[CudaMemNode]: free(%p[%zu]),\t%s used, %s max\n", ptr, oldsize, bytes_allocated_str().c_str(), max_bytes_allocated_str().c_str());
     }
 
     error = cudaSetDevice(old_device);
@@ -111,7 +111,7 @@ void CudaMemNode::memcpy_to(void* dest, MemNode& dest_node, void* src, size_t si
             ptiCheckCUDAError(error);
             cudaEventDestroy(cuda_start_event);
             cudaEventDestroy(cuda_stop_event);
-            std::fprintf(stderr, "[CudaMemNode DtoH] %.9lf s spent on devices\n", elapsed * 1e-3);
+            std::fprintf(stderr, "[CudaMemNode DtoH]: %.9lf s spent on devices\n", elapsed * 1e-3);
         }
     } else if(CudaMemNode* cuda_dest_node = dynamic_cast<CudaMemNode*>(&dest_node)) {
         if(memcpy_profiling) {
@@ -134,7 +134,7 @@ void CudaMemNode::memcpy_to(void* dest, MemNode& dest_node, void* src, size_t si
             ptiCheckCUDAError(error);
             cudaEventDestroy(cuda_start_event);
             cudaEventDestroy(cuda_stop_event);
-            std::fprintf(stderr, "[CudaMemNode DtoD] %.9lf s spent on devices\n", elapsed * 1e-3);
+            std::fprintf(stderr, "[CudaMemNode DtoD]: %.9lf s spent on devices\n", elapsed * 1e-3);
         }
     } else {
         ptiCheckError(true, 1, "Unknown memory node type");
@@ -171,7 +171,7 @@ void CudaMemNode::memcpy_from(void* dest, void* src, MemNode& src_node, size_t s
             ptiCheckCUDAError(error);
             cudaEventDestroy(cuda_start_event);
             cudaEventDestroy(cuda_stop_event);
-            std::fprintf(stderr, "[CudaMemNode HtoD] %.9lf s spent on devices\n", elapsed * 1e-3);
+            std::fprintf(stderr, "[CudaMemNode HtoD]: %.9lf s spent on devices\n", elapsed * 1e-3);
         }
     } else if(CudaMemNode* cuda_src_node = dynamic_cast<CudaMemNode*>(&src_node)) {
         if(memcpy_profiling) {
@@ -194,7 +194,7 @@ void CudaMemNode::memcpy_from(void* dest, void* src, MemNode& src_node, size_t s
             ptiCheckCUDAError(error);
             cudaEventDestroy(cuda_start_event);
             cudaEventDestroy(cuda_stop_event);
-            std::fprintf(stderr, "[CudaMemNode DtoD] %.9lf s spent on devices\n", elapsed * 1e-3);
+            std::fprintf(stderr, "[CudaMemNode DtoD]: %.9lf s spent on devices\n", elapsed * 1e-3);
         }
     } else {
         ptiCheckError(true, 1, "Unknown memory node type");
