@@ -77,6 +77,8 @@ int main(int argc, char const* argv[]) {
     Y1.dump(fY1, 1);
     fY1.fclose();
 
+    X = SparseTensor(); // release memory
+
     std::printf("Preheating...\n");
     std::fflush(stdout);
 
