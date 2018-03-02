@@ -19,7 +19,6 @@
 #include <ParTI/memnode.hpp>
 #include <cstdlib>
 #include <ParTI/error.hpp>
-#include <ParTI/timer.hpp>
 
 namespace pti {
 
@@ -83,34 +82,59 @@ void CudaMemNode::free(void* ptr) {
 }
 
 void CudaMemNode::memcpy_to(void* dest, MemNode& dest_node, void* src, size_t size) {
-    char buf_timer[sizeof (Timer)];
-    Timer *timer = nullptr;
+    cudaEvent_t cuda_start_event, cuda_stop_event;
     cudaError_t error;
+    if(memcpy_profiling) {
+        error = cudaEventCreate(&cuda_start_event);
+        ptiCheckCUDAError(error);
+        error = cudaEventCreate(&cuda_stop_event);
+        ptiCheckCUDAError(error);
+    }
     if(CpuMemNode* cpu_dest_node = dynamic_cast<CpuMemNode*>(&dest_node)) {
-        if(memcpy_profiling) {
-            timer = new(buf_timer) Timer(cuda_device);
-            timer->start();
-        }
         error = cudaSetDevice(cuda_device);
         ptiCheckCUDAError(error);
+        if(memcpy_profiling) {
+            error = cudaEventRecord(cuda_start_event);
+            ptiCheckCUDAError(error);
+            error = cudaEventSynchronize(cuda_start_event);
+            ptiCheckCUDAError(error);
+        }
         error = cudaMemcpy(dest, src, size, cudaMemcpyDeviceToHost);
         ptiCheckCUDAError(error);
         if(memcpy_profiling) {
-            timer->stop();
-            timer->print_elapsed_time("CudaMemNode DtoH");
-            timer->~Timer();
+            error = cudaEventRecord(cuda_stop_event);
+            ptiCheckCUDAError(error);
+            error = cudaEventSynchronize(cuda_stop_event);
+            ptiCheckCUDAError(error);
+            float elapsed;
+            error = cudaEventElapsedTime(&elapsed, cuda_start_event, cuda_stop_event);
+            ptiCheckCUDAError(error);
+            cudaEventDestroy(cuda_start_event);
+            cudaEventDestroy(cuda_stop_event);
+            std::fprintf(stderr, "[CudaMemNode DtoH] %.9lf s spent on devices\n", elapsed * 1e-3);
         }
     } else if(CudaMemNode* cuda_dest_node = dynamic_cast<CudaMemNode*>(&dest_node)) {
         if(memcpy_profiling) {
-            timer = new(buf_timer) Timer(cuda_device);
-            timer->start();
+            error = cudaSetDevice(cuda_device);
+            ptiCheckCUDAError(error);
+            error = cudaEventRecord(cuda_start_event);
+            ptiCheckCUDAError(error);
+            error = cudaEventSynchronize(cuda_start_event);
+            ptiCheckCUDAError(error);
         }
         error = cudaMemcpyPeer(dest, cuda_dest_node->cuda_device, src, cuda_device, size);
         ptiCheckCUDAError(error);
         if(memcpy_profiling) {
-            timer->stop();
-            timer->print_elapsed_time("CudaMemNode DtoD");
-            timer->~Timer();
+            error = cudaEventRecord(cuda_stop_event);
+            ptiCheckCUDAError(error);
+            error = cudaEventSynchronize(cuda_stop_event);
+            ptiCheckCUDAError(error);
+            float elapsed;
+            error = cudaEventElapsedTime(&elapsed, cuda_start_event, cuda_stop_event);
+            ptiCheckCUDAError(error);
+            cudaEventDestroy(cuda_start_event);
+            cudaEventDestroy(cuda_stop_event);
+            std::fprintf(stderr, "[CudaMemNode DtoD] %.9lf s spent on devices\n", elapsed * 1e-3);
         }
     } else {
         ptiCheckError(true, 1, "Unknown memory node type");
@@ -118,34 +142,59 @@ void CudaMemNode::memcpy_to(void* dest, MemNode& dest_node, void* src, size_t si
 }
 
 void CudaMemNode::memcpy_from(void* dest, void* src, MemNode& src_node, size_t size) {
-    char buf_timer[sizeof (Timer)];
-    Timer *timer = nullptr;
+    cudaEvent_t cuda_start_event, cuda_stop_event;
     cudaError_t error;
+    if(memcpy_profiling) {
+        error = cudaEventCreate(&cuda_start_event);
+        ptiCheckCUDAError(error);
+        error = cudaEventCreate(&cuda_stop_event);
+        ptiCheckCUDAError(error);
+    }
     if(CpuMemNode* cpu_src_node = dynamic_cast<CpuMemNode*>(&src_node)) {
-        if(memcpy_profiling) {
-            timer = new(buf_timer) Timer(cuda_device);
-            timer->start();
-        }
         error = cudaSetDevice(cuda_device);
         ptiCheckCUDAError(error);
+        if(memcpy_profiling) {
+            error = cudaEventRecord(cuda_start_event);
+            ptiCheckCUDAError(error);
+            error = cudaEventSynchronize(cuda_start_event);
+            ptiCheckCUDAError(error);
+        }
         error = cudaMemcpy(dest, src, size, cudaMemcpyHostToDevice);
         ptiCheckCUDAError(error);
         if(memcpy_profiling) {
-            timer->stop();
-            timer->print_elapsed_time("CudaMemNode HtoD");
-            timer->~Timer();
+            error = cudaEventRecord(cuda_stop_event);
+            ptiCheckCUDAError(error);
+            error = cudaEventSynchronize(cuda_stop_event);
+            ptiCheckCUDAError(error);
+            float elapsed;
+            error = cudaEventElapsedTime(&elapsed, cuda_start_event, cuda_stop_event);
+            ptiCheckCUDAError(error);
+            cudaEventDestroy(cuda_start_event);
+            cudaEventDestroy(cuda_stop_event);
+            std::fprintf(stderr, "[CudaMemNode HtoD] %.9lf s spent on devices\n", elapsed * 1e-3);
         }
     } else if(CudaMemNode* cuda_src_node = dynamic_cast<CudaMemNode*>(&src_node)) {
         if(memcpy_profiling) {
-            timer = new(buf_timer) Timer(cuda_device);
-            timer->start();
+            error = cudaSetDevice(cuda_device);
+            ptiCheckCUDAError(error);
+            error = cudaEventRecord(cuda_start_event);
+            ptiCheckCUDAError(error);
+            error = cudaEventSynchronize(cuda_start_event);
+            ptiCheckCUDAError(error);
         }
         error = cudaMemcpyPeer(dest, cuda_device, src, cuda_src_node->cuda_device, size);
         ptiCheckCUDAError(error);
         if(memcpy_profiling) {
-            timer->stop();
-            timer->print_elapsed_time("CudaMemNode DtoD");
-            timer->~Timer();
+            error = cudaEventRecord(cuda_stop_event);
+            ptiCheckCUDAError(error);
+            error = cudaEventSynchronize(cuda_stop_event);
+            ptiCheckCUDAError(error);
+            float elapsed;
+            error = cudaEventElapsedTime(&elapsed, cuda_start_event, cuda_stop_event);
+            ptiCheckCUDAError(error);
+            cudaEventDestroy(cuda_start_event);
+            cudaEventDestroy(cuda_stop_event);
+            std::fprintf(stderr, "[CudaMemNode DtoD] %.9lf s spent on devices\n", elapsed * 1e-3);
         }
     } else {
         ptiCheckError(true, 1, "Unknown memory node type");
