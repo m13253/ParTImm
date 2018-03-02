@@ -199,6 +199,9 @@ SparseTensor tucker_decomposition(
         timer_loop.stop();
         timer_loop.print_elapsed_time("Tucker Decomp Loop");
 
+        std::printf("\n");
+        std::fflush(stdout);
+
         Timer timer_core(cpu);
         timer_core.start();
         core = tensor_times_matrix(*Utilde, U[dimorder[N-1]], dimorder[N-1], device, true);
