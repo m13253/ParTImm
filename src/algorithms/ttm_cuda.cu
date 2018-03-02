@@ -32,9 +32,9 @@ namespace pti {
 namespace {
 
 void __global__ ttm_cuda_kernel(
-    size_t const *fiberidx, size_t const *X_indices_m,
+    size_t const *__restrict__ fiberidx, size_t const *__restrict__ X_indices_m,
     size_t nrows, size_t ncols, size_t Y_chunk_size, size_t Y_subchunk_size, size_t X_chunk_size, size_t U_stride,
-    Scalar *Y_values, Scalar const *X_values, Scalar const *U_values
+    Scalar *__restrict__ Y_values, Scalar const *__restrict__ X_values, Scalar const *__restrict__ U_values
 ) {
     size_t i = blockIdx.x;
     size_t inz_begin = fiberidx[i];

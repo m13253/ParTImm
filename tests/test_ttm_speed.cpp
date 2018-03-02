@@ -42,7 +42,7 @@ int main(int argc, char const* argv[]) {
     std::vector<char const*> args = parse_args(argc, argv, defs);
 
     if(args.size() != 2) {
-        std::printf("Usage: %s [OPTIONS] X U mode\n\n", argv[0]);
+        std::printf("Usage: %s [OPTIONS] X U\n\n", argv[0]);
         std::printf("Options:\n");
         std::printf("\t-p, --preheat\tNumber of preheat calculations [Default: 2].\n");
         std::printf("\t-c, --count\tNumber of calculations [Default: 10].\n");
