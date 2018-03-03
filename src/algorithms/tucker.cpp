@@ -187,6 +187,16 @@ SparseTensor tucker_decomposition(
             timer_ttm_chain.stop();
             timer_ttm_chain.print_elapsed_time("TTM Chain");
 
+            if(device->mem_node != cpu) {
+                std::printf("[Tucker TTM Chain]: Releasing GPU memory of X_sort_cache[%zu]\n", n);
+                X_sort_cache[n].values.mark_dirty(cpu);
+                X_sort_cache[n].values.free(device->mem_node);
+                for(size_t m = 0; m < N; ++m) {
+                    X_sort_cache[n].indices[m].mark_dirty(cpu);
+                    X_sort_cache[n].indices[m].free(device->mem_node);
+                }
+            }
+
             Timer timer_svd(device->device_id);
             timer_svd.start();
             // Mode n is sparse, while other modes are dense
