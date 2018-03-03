@@ -18,6 +18,8 @@
 
 #include <ParTI/algorithm.hpp>
 #include <cassert>
+#include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -38,6 +40,12 @@ SparseTensor tensor_times_matrix(SparseTensor& X, Tensor& U, size_t mode, Device
         (void) cuda_device;
         ptiCheckError(true, ERR_BUILD_CONFIG, "CUDA not enabled");
 #endif
+    }
+
+    if(const char *env_pti_use_omp_ttm = std::getenv("PTI_USE_OMP_TTM")) {
+        if(env_pti_use_omp_ttm != nullptr && std::strcmp(env_pti_use_omp_ttm, "1") == 0) {
+            return tensor_times_matrix_omp(X, U, mode, skip_sort);
+        }
     }
 
     size_t nmodes = X.nmodes;
